@@ -8,7 +8,7 @@ export default defineConfig({
   server: {
     port: 5177, // Stel een vaste poort in
   },
-  plugins: [react(), tsconfigPaths(), commonjs()],
+  plugins: [react(), commonjs(), tsconfigPaths()],
   resolve: {
     alias: {
       'perspectives-core': '/Users/joopringelberg/Code/perspectives-core/dist/perspectives-core.js',
@@ -16,18 +16,6 @@ export default defineConfig({
     }
   },
   optimizeDeps: {
-    include: ['invariant', 'classnames', 'warning', 'react']
-  },
-  build: {
-    rollupOptions: {
-      output: {
-        globals: {
-          invariant: 'invariant',
-          classnames: 'classnames',
-          warning: 'warning',
-          react: 'react'
-        }
-      }
-    }
+    include: ['react', 'react-dom']
   }
 })

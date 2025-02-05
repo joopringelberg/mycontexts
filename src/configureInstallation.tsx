@@ -1,14 +1,34 @@
-import React, { useState, ReactElement } from 'react';
+import { useState, ReactElement, FC, ChangeEvent } from 'react';
 import { Container, Navbar, Button, Modal, Form, Col, Row } from 'react-bootstrap';
 import 'bootswatch/dist/lumen/bootstrap.min.css';
 import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
 import Tooltip from 'react-bootstrap/Tooltip';
+import { set as setValue} from 'idb-keyval';
 import './app.css';
+import {init} from '@paralleldrive/cuid2';
+import { takeCUID } from 'perspectives-react';
 
-const CreateInstallation: React.FC = (): ReactElement => {
+
+const PUBLICKEY = "_publicKey";
+const PRIVATEKEY = "_privateKey"; 
+
+interface IdentityFile {author: string}
+
+interface KeyPair { exportedPrivateKey: JsonWebKey, exportedPublicKey: JsonWebKey }
+
+export interface InstallationData {
+  deviceName: string | null;
+  keyPair: KeyPair | null;
+  identityFile: IdentityFile | null;
+  couchdbUrl: string | null;
+  couchdbPort: number | null;
+  userName: string | null;
+  password: string | null;
+}
+
+const ConfigureInstallation: FC = (): ReactElement => {
   const [showFAQPanel, setShowFAQPanel] = useState<boolean>(false);
   const [showInstallPanel, setShowInstallPanel] = useState<boolean>(false);
-
   return (
     <>
       <Navbar bg='primary' fixed="top">
@@ -29,12 +49,12 @@ const CreateInstallation: React.FC = (): ReactElement => {
         </Button>
       </Container>
       <FAQModal show={showFAQPanel} onHide={() => setShowFAQPanel(false)} />
-      <InstallModal show={showInstallPanel} onHide={() => setShowInstallPanel(false)} />
+      <InstallModal show={showInstallPanel} onHide={() => setShowInstallPanel(false)}/>
     </>
   );
 };
 
-const FAQModal: React.FC<{ show: boolean; onHide: () => void }> = ({ show, onHide }) => (
+const FAQModal: FC<{ show: boolean; onHide: () => void }> = ({ show, onHide }) => (
   <Modal show={show} onHide={onHide} fullscreen dialogClassName="slide-in-bottom">
     <Modal.Header closeButton>
       <Modal.Title>MyContexts FAQ's</Modal.Title>
@@ -140,29 +160,61 @@ const FAQModal: React.FC<{ show: boolean; onHide: () => void }> = ({ show, onHid
   </Modal>
 );
 
-const InstallModal: React.FC<{ show: boolean; onHide: () => void }> = ({ show, onHide }) => {
-  const [deviceName, setDeviceName] = useState<string>('');
+const InstallModal: FC<{ show: boolean; onHide: () => void }> = ({ show, onHide }) => {
+  const [deviceName, setDeviceName] = useState<string | null>(null);
   const [notFirstMyContexts, setNotFirstMyContexts] = useState<boolean>(false);
   const [advancedInstall, setAdvancedInstall] = useState<boolean>(false);
   const [useOwnDatabase, setUseOwnDatabase] = useState<boolean>(false);
   const [useOwnKey, setUseOwnKey] = useState<boolean>(false);
-  const [ownKey, setOwnKey] = useState<File | null>(null);
-  const [dbUrl, setDbUrl] = useState<string>('');
-  const [dbPort, setDbPort] = useState<string>('');
-  const [dbUsername, setDbUsername] = useState<string>('');
-  const [dbPassword, setDbPassword] = useState<string>('');
+  const [keyPair, setKeyPair] = useState<KeyPair | null>(null);
+  const [identityFile, setIdentityFile] = useState<IdentityFile | null>(null);
+  const [couchdbUrl, setCouchdbUrl] = useState<string | null>(null);
+  const [couchdbPort, setCouchDbPort] = useState<number | null>(null);
+  const [userName, setUsername] = useState<string | null>(null);
+  const [password, setPassword] = useState<string|null>(null);
 
-  function handleFileSelect(event: React.ChangeEvent<HTMLInputElement>)
+  function handleCryptoKeys(event: ChangeEvent<HTMLInputElement>)
   {
     const fileList = event.target.files;
     if (fileList && fileList.length > 0)
     {
-      setOwnKey(fileList[0]);
-    }
+      fileToJSON(fileList[0]).then((json) => {
+        setKeyPair(json);
+    })}
     else
     {
-      setOwnKey(null);
+      setKeyPair(null);
+    };
+  }
+
+  function handleIdentityFile(event: ChangeEvent<HTMLInputElement>)
+  {
+
+    const fileList = event.target.files;
+    let json;
+    if (fileList?.length && fileList[0].name.match(/.*\.json/)) {
+      fileList[0].text()
+        .then(t => {
+          json = JSON.parse(t);
+          if (json.author && json.timeStamp && json.deltas && json.publicKeys) {
+            setIdentityFile(json);
+            setValue('identityFile', json);  
+            }
+          })
+        .catch(reason => console.log(reason));
+      }
+  }
+
+  function fileToJSON (file: File): Promise<any> {
+    if (file.type == "application/json")
+    {
+      return file.text().then( JSON.parse )
     }
+    // Otherwise fail
+    else
+    {
+      return Promise.reject("File is not a JSON file");
+    } 
   }
 
   return (<Modal show={show} onHide={onHide} fullscreen dialogClassName="slide-in-bottom">
@@ -176,9 +228,14 @@ const InstallModal: React.FC<{ show: boolean; onHide: () => void }> = ({ show, o
           <Form.Control
             type="text"
             placeholder="E.g. mylaptop, mymobile, mytablet"
-            value={deviceName}
-            onChange={(e) => setDeviceName(e.target.value)}
+            value={deviceName || ''}
+            required
+            onChange={(e) => {
+              setDeviceName(e.target.value)
+              setValue('deviceName', e.target.value)
+            }}
           />
+          <Form.Control.Feedback type="invalid">Please enter a valid username.</Form.Control.Feedback>
         </Form.Group>
         <SliderWithTooltip 
           label="Niet mijn eerste installatie" 
@@ -188,11 +245,11 @@ const InstallModal: React.FC<{ show: boolean; onHide: () => void }> = ({ show, o
           <Container className='pt-0'>
             <Form.Group controlId="formIdentityFileUpload" className="mt-3">
               <Form.Label>Upload je identity file:</Form.Label>
-              <Form.Control type="file" />
+              <Form.Control type="file" onChange={handleIdentityFile}/>
             </Form.Group>
             <Form.Group controlId="formKeyFileUploadNotFirstInstallation" className="mt-3">
-              <Form.Label>Upload je cryptografische sleutel:</Form.Label>
-              <Form.Control type="file" onChange={handleFileSelect}/>
+              <Form.Label>Upload je cryptografische sleutels:</Form.Label>
+              <Form.Control type="file" onChange={handleCryptoKeys}/>
             </Form.Group>
           </Container>
         )}
@@ -216,8 +273,11 @@ const InstallModal: React.FC<{ show: boolean; onHide: () => void }> = ({ show, o
                   <Form.Control
                   type="text"
                   placeholder="https://mydatabase.com"
-                  value={dbUrl}
-                  onChange={(e) => setDbUrl(e.target.value)}
+                  value={couchdbUrl || ''}
+                  onChange={(e) => {
+                    setCouchdbUrl(e.target.value);
+                    setValue('couchdbUrl', e.target.value);
+                  }}
                 />
                 </Col>
               </Form.Group>
@@ -227,11 +287,13 @@ const InstallModal: React.FC<{ show: boolean; onHide: () => void }> = ({ show, o
                 </Form.Label>
                 <Col sm="9">
                   <Form.Control
-                  type="text"
-                  placeholder="1234"
-                  value={dbPort}
-                  onChange={(e) => setDbPort(e.target.value)}
-                />
+                  type="number"
+                  value={couchdbPort || ''}
+                  onChange={(e) => {
+                    setCouchDbPort(parseInt(e.target.value));
+                    setValue('couchdbPort', e.target.value);
+                  }}
+                  />
                 </Col>
               </Form.Group>
               <Form.Group as={Row}>
@@ -240,10 +302,14 @@ const InstallModal: React.FC<{ show: boolean; onHide: () => void }> = ({ show, o
                 </Form.Label>
                 <Col sm="9">
                   <Form.Control
+                  // TODO: VALIDATE USERNAME
                   type="text"
                   placeholder="myusername"
-                  value={dbUsername}
-                  onChange={(e) => setDbUsername(e.target.value)}
+                  value={userName || ''}
+                  onChange={(e) => {
+                    setUsername(e.target.value);
+                    setValue('userName', e.target.value);
+                  }}
                 />
                 </Col>
               </Form.Group>
@@ -255,22 +321,25 @@ const InstallModal: React.FC<{ show: boolean; onHide: () => void }> = ({ show, o
                   <Form.Control
                   type="text"
                   placeholder="mypassword"
-                  value={dbPassword}
-                  onChange={(e) => setDbPassword(e.target.value)}
+                  value={password || ''}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setValue('password', e.target.value);
+                    }}
                 />
                 </Col>
               </Form.Group>
               </Container>
             )}
 
-          { !ownKey &&
+          { !keyPair &&
             <Form.Group>
               <Slider label="Gebruik eigen cryptografische sleutel" callback={setUseOwnKey} />            {
                 useOwnKey && (
                   <Container>
                     <Form.Group controlId="formKeyFileUpload" className="mt-3">
-                      <Form.Label>Upload je cryptografische sleutel:</Form.Label>
-                      <Form.Control type="file" />
+                      <Form.Label>Upload je cryptografische sleutels:</Form.Label>
+                      <Form.Control type="file" onChange={handleCryptoKeys}/>
                     </Form.Group>
                   </Container>)
               }
@@ -281,18 +350,85 @@ const InstallModal: React.FC<{ show: boolean; onHide: () => void }> = ({ show, o
       </Form>
     </Modal.Body>
     <Modal.Footer>
-      <Button variant="secondary" onClick={onHide}>
+      {/* Clear state and close dialog */}
+      <Button variant="secondary" onClick={ ()  =>{
+        setDeviceName(null);
+        setNotFirstMyContexts(false);
+        setAdvancedInstall(false);
+        setUseOwnDatabase(false);
+        onHide()
+      }}>
         Close
       </Button>
-      <Button variant="primary" onClick={handleInstall}>
+      {/* Gather state and put in KeyVal database. Then start actual installation process */}
+      <Button variant="primary" onClick={() => handleInstall({ deviceName, keyPair, identityFile, couchdbUrl, couchdbPort, userName, password })}>
         Install
       </Button>
     </Modal.Footer>
   </Modal>)};
 
-const handleInstall = () => {
-  console.log('Start installatie proces');
+function handleInstall ( { deviceName, keyPair, identityFile, couchdbUrl, couchdbPort, userName, password }: InstallationData ) {
+  // A function that generates a CUID using the current epoch as fingerprint.
+  const cuid2 = init({
+    // A custom random function with the same API as Math.random.
+    // You can use this to pass a cryptographically secure random function.
+    random: Math.random,
+    // the length of the id
+    length: 10,
+    // A custom fingerprint for the host environment. This is used to help
+    // prevent collisions when generating ids in a distributed system.
+    fingerprint: Date.now().toString(36)
+    });
+
+  let perspectivesUsersId;
+  if (identityFile) {
+    // Get the perspectivesUsersId from the identity file
+    // Save the identity file
+    perspectivesUsersId = takeCUID( identityFile.author )
+    perspectivesUsersId = identityFile.author;
+  } else {
+    perspectivesUsersId = cuid2();
+  }
+  // If there is no privateKey, generate a new keypair.
+  if (keyPair) {
+    // Save the keypair
+    setValue( perspectivesUsersId + PUBLICKEY, keyPair.exportedPublicKey )
+    setValue( perspectivesUsersId + PRIVATEKEY, keyPair.exportedPrivateKey )
+  }
+    else {
+    // Generate a new keypair
+    createKeypair(perspectivesUsersId).then( ({ exportedPrivateKey, exportedPublicKey }) => {
+      // Save the keypair
+      setValue( perspectivesUsersId + PUBLICKEY, exportedPublicKey )
+      setValue( perspectivesUsersId + PRIVATEKEY, exportedPrivateKey )
+    })
+  }
 };
+
+function createKeypair (perspectivesUsersId: string) : Promise<KeyPair >
+{
+  let keypair : CryptoKeyPair, exportedPrivateKey: JsonWebKey, exportedPublicKey: JsonWebKey;
+  return window.crypto.subtle.generateKey(
+      {
+      name: "ECDSA",
+      namedCurve: "P-384"
+      },
+      true, // extractable.
+      ["sign", "verify"])
+    .then( kp => keypair = kp)
+    .then( () => setValue( perspectivesUsersId + PUBLICKEY, keypair.publicKey ) )
+    .then( () => window.crypto.subtle.exportKey( "jwk", keypair.privateKey ) )
+    .then( buff => 
+      {
+        // We must save the exported private key because it appears as if it can only be exported once.
+        exportedPrivateKey = buff;
+        return window.crypto.subtle.importKey( "jwk", buff, { name: "ECDSA", namedCurve: "P-384" }, false, ["sign"])
+      } )
+    .then( unextractablePrivateKey => setValue( perspectivesUsersId + PRIVATEKEY, unextractablePrivateKey))
+    .then( () => window.crypto.subtle.exportKey( "jwk", keypair.publicKey ) )
+    .then( buff => exportedPublicKey = buff)
+    .then( () => ({ exportedPrivateKey, exportedPublicKey }) )
+}
 
 function SliderWithTooltip({ label, tooltip, callback }: { label: string, tooltip: string, callback: (e: any) => void }): ReactElement { 
   return (
@@ -338,4 +474,21 @@ function Slider({ label, callback }: { label: string, callback: (e: any) => void
 );
 }
 
-export default CreateInstallation;
+function fileToJSON(file: File): Promise<any> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target && event.target.result) {
+        try {
+          resolve(JSON.parse(event.target.result as string));
+        } catch (error) {
+          reject(error);
+        }
+      }
+    };
+    reader.readAsText(file);
+  });
+}
+
+
+export default ConfigureInstallation;

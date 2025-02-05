@@ -1,7 +1,7 @@
-import { Component, useState } from 'react'
+import { Component } from 'react'
 import './App.css'
-import { del as deleteKey, set as setValue, get as getValue } from 'idb-keyval';
-import CreateInstallation from './createInstallation';
+import { get as getValue } from 'idb-keyval';
+import ConfigureInstallation from './configureInstallation';
 
 interface AppState {
   phase: 'installationExists' | 'prepareInstallation' | 'installationError' | 'installing' | undefined;
@@ -18,8 +18,8 @@ export default class App extends Component<{}, AppState>
   }
 
   componentDidMount(): void {
-    isInstallationComplete().then((value: boolean) => {
-      if (value) {
+    isInstallationComplete().then((isComplete: boolean) => {
+      if (isComplete) {
         this.setState({ phase: 'installationExists' });
       } else {
         this.setState({ phase: 'prepareInstallation' });
@@ -37,7 +37,7 @@ export default class App extends Component<{}, AppState>
         </div>
       );
       case 'prepareInstallation':
-      return <CreateInstallation />;
+      return <ConfigureInstallation />;
       case 'installationError' :
       return <div>Installation error.</div>;
       case 'installing':
