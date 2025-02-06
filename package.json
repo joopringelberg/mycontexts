@@ -12,6 +12,9 @@
   "dependencies": {
     "@paralleldrive/cuid2": "^2.2.2",
     "bootswatch": "^5.3.3",
+    "i18next": "^24.2.2",
+    "i18next-browser-languagedetector": "^8.0.2",
+    "i18next-http-backend": "^3.0.2",
     "idb-keyval": "^6.2.1",
     "perspectives-core": "file:/Users/joopringelberg/Code/perspectives-core",
     "perspectives-proxy": "file:/Users/joopringelberg/Code/perspectives-proxy",

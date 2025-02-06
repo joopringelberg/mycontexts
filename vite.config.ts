@@ -8,7 +8,11 @@ export default defineConfig({
   server: {
     port: 5177, // Stel een vaste poort in
   },
-  plugins: [react(), commonjs(), tsconfigPaths()],
+  plugins: [
+    react(),
+    commonjs(),
+    tsconfigPaths()
+  ],
   resolve: {
     alias: {
       'perspectives-core': '/Users/joopringelberg/Code/perspectives-core/dist/perspectives-core.js',

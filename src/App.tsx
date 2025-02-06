@@ -2,6 +2,9 @@ import { Component } from 'react'
 import './App.css'
 import { get as getValue } from 'idb-keyval';
 import ConfigureInstallation from './configureInstallation';
+import {initI18next, loadLanguageResources} from "./i18next.js";
+
+await initI18next();
 
 interface AppState {
   phase: 'installationExists' | 'prepareInstallation' | 'installationError' | 'installing' | undefined;
@@ -9,9 +12,9 @@ interface AppState {
 
 export default class App extends Component<{}, AppState>
 {
-  constructor()
+  constructor(props: {})
   {
-    super({});
+    super(props);
     this.state =
       { phase: undefined
       };
