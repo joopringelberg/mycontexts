@@ -1,10 +1,9 @@
 import { Component, ReactElement } from 'react'
 import './App.css'
 import { get as getValue } from 'idb-keyval';
-import ConfigureInstallation, { InstallationData, InstallationResult, KeyPairData } from './configureInstallation';
-import {initI18next, loadLanguageResources} from "./i18next.js";
+import ConfigureInstallation, { InstallationResult } from './configureInstallation';
+import {initI18next} from "./i18next.js";
 import { SaveKeyPair } from './saveKeypair.js';
-import { KeyPair } from './configurationComponents.js';
 
 await initI18next();
 
