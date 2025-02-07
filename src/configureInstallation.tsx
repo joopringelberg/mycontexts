@@ -16,6 +16,7 @@ const PUBLICKEY = "_publicKey";
 const PRIVATEKEY = "_privateKey"; 
 
 export interface InstallationData {
+  perspectivesUserId: string | null;
   deviceName: string | null;
   keyPair: KeyPair | null;
   identityFile: IdentityFile | null;
@@ -24,8 +25,18 @@ export interface InstallationData {
   userName: string | null;
   password: string | null;
 }
+export type InstallationResult = KeyPairData | NoKeyPairData;
 
-const ConfigureInstallation: FC = (): ReactElement => {
+export interface NoKeyPairData {type: 'NoKeyPairData'}
+
+export interface KeyPairData {
+  type: 'KeyPairData';
+  perspectivesUserId: string;
+  keyPair: KeyPair;
+}
+
+
+const ConfigureInstallation: FC<{callback: (data: InstallationResult) => void}> = ({callback}) => {
   const [showFAQPanel, setShowFAQPanel] = useState<boolean>(false);
   const [showInstallPanel, setShowInstallPanel] = useState<boolean>(false);
   return (
@@ -45,12 +56,14 @@ const ConfigureInstallation: FC = (): ReactElement => {
         </Button>
       </Container>
       <FAQModal show={showFAQPanel} onHide={() => setShowFAQPanel(false)} />
-      <InstallModal show={showInstallPanel} onHide={() => setShowInstallPanel(false)}/>
+      <InstallModal show={showInstallPanel} onHide={() => setShowInstallPanel(false)} callback={callback}/>
     </>
   );
 };
 
-const InstallModal: FC<{ show: boolean; onHide: () => void }> = ({ show, onHide }) => {
+export default ConfigureInstallation;
+
+const InstallModal: FC<{ show: boolean; onHide: () => void, callback: (data: InstallationResult) => void }> = ({ show, onHide, callback }) => {
   const [deviceName, setDeviceName] = useState<string | null>(null);
   const [notMyFirstInstallation, setNotMyFirstInstallation] = useState<boolean>(false);
   const [advancedInstall, setAdvancedInstall] = useState<boolean>(false);
@@ -64,22 +77,12 @@ const InstallModal: FC<{ show: boolean; onHide: () => void }> = ({ show, onHide 
   const [password, setPassword] = useState<string|null>(null);
   const [validated, setValidated] = useState(false);
 
-  interface ValidateProps {
-    deviceName: string | null;
-    keyPair: KeyPair | null;
-    identityFile: IdentityFile | null;
-    couchdbUrl: string | null;
-    couchdbPort: number | null;
-    userName: string | null;
-    password: string | null;
-  }
-
   function validate(event: React.MouseEvent<HTMLButtonElement>): void {
     const form = document.getElementById('installForm') as HTMLFormElement;
     event.preventDefault();
     event.stopPropagation();
     if (form.checkValidity()) {
-      handleInstall({ deviceName, keyPair, identityFile, couchdbUrl, couchdbPort, userName, password } as ValidateProps);
+      handleInstall({ deviceName, keyPair, identityFile, couchdbUrl, couchdbPort, userName, password } as InstallationData, callback);
       }
     setValidated(true);
   }
@@ -247,7 +250,7 @@ const InstallModal: FC<{ show: boolean; onHide: () => void }> = ({ show, onHide 
     </Modal.Footer>
   </Modal>)};
 
-function handleInstall ( { deviceName, keyPair, identityFile, couchdbUrl, couchdbPort, userName, password }: InstallationData ) {
+function handleInstall ( { deviceName, keyPair, identityFile, couchdbUrl, couchdbPort, userName, password }: InstallationData, callback: (data: InstallationResult) => void ) {
   // A function that generates a CUID using the current epoch as fingerprint.
   const cuid2 = init({
     // A custom random function with the same API as Math.random.
@@ -260,30 +263,47 @@ function handleInstall ( { deviceName, keyPair, identityFile, couchdbUrl, couchd
     fingerprint: Date.now().toString(36)
     });
 
-  let perspectivesUsersId;
+  let perspectivesUserId;
   if (identityFile) {
     // Get the perspectivesUsersId from the identity file
     // Save the identity file
-    perspectivesUsersId = takeCUID( identityFile.author )
-    perspectivesUsersId = identityFile.author;
+    perspectivesUserId = takeCUID( identityFile.author )
+    perspectivesUserId = identityFile.author;
   } else {
-    perspectivesUsersId = cuid2();
+    perspectivesUserId = cuid2();
   }
   // If there is no privateKey, generate a new keypair.
   if (keyPair) {
-    // Save the keypair
-    setValue( perspectivesUsersId + PUBLICKEY, keyPair.publicKey )
-    setValue( perspectivesUsersId + PRIVATEKEY, keyPair.privateKey )
+    // Save the private key in a way that it cannot be exported.
+    setValue( perspectivesUserId + PUBLICKEY, keyPair.publicKey )
+    setValue( perspectivesUserId + PRIVATEKEY, keyPair.privateKey )
+    callback({type: 'NoKeyPairData'});
   }
     else {
     // Generate a new keypair
-    createKeypair(perspectivesUsersId).then( ({ privateKey: exportedPrivateKey, publicKey: exportedPublicKey }) => {
-      // Save the keypair
-      setValue( perspectivesUsersId + PUBLICKEY, exportedPublicKey )
-      setValue( perspectivesUsersId + PRIVATEKEY, exportedPrivateKey )
+    createKeypair(perspectivesUserId).then( ({ privateKey: exportedPrivateKey, publicKey: exportedPublicKey }) => {
+      const keyPair = { privateKey: exportedPrivateKey, publicKey: exportedPublicKey };
+      setValue( "keyPair", keyPair)
+      // The pair should be downloaded for future use.
+      callback({ type: 'KeyPairData', perspectivesUserId, keyPair});
     })
   }
 };
+
+// Given a CryptoKey, save the private key part in a way that it cannot be exported.
+// Return the exported private key as a JsonWebKey.
+function savePrivateKey (perspectivesUsersId: string, privateKey: CryptoKey) : Promise<JsonWebKey> {
+  let exportedPrivateKey: JsonWebKey;
+  return window.crypto.subtle.exportKey( "jwk", privateKey )
+    .then( buff => 
+      {
+        exportedPrivateKey = buff;
+        // We must save the exported private key because it appears as if it can only be exported once.
+        return window.crypto.subtle.importKey( "jwk", buff, { name: "ECDSA", namedCurve: "P-384" }, false, ["sign"])
+      } )
+    .then( unextractablePrivateKey => setValue( perspectivesUsersId + PRIVATEKEY, unextractablePrivateKey))
+    .then ( () => exportedPrivateKey)
+}
 
 function createKeypair (perspectivesUsersId: string) : Promise<KeyPair >
 {
@@ -297,14 +317,8 @@ function createKeypair (perspectivesUsersId: string) : Promise<KeyPair >
       ["sign", "verify"])
     .then( kp => keypair = kp)
     .then( () => setValue( perspectivesUsersId + PUBLICKEY, keypair.publicKey ) )
-    .then( () => window.crypto.subtle.exportKey( "jwk", keypair.privateKey ) )
-    .then( buff => 
-      {
-        // We must save the exported private key because it appears as if it can only be exported once.
-        privateKey = buff;
-        return window.crypto.subtle.importKey( "jwk", buff, { name: "ECDSA", namedCurve: "P-384" }, false, ["sign"])
-      } )
-    .then( unextractablePrivateKey => setValue( perspectivesUsersId + PRIVATEKEY, unextractablePrivateKey))
+    .then( () => savePrivateKey( perspectivesUsersId, keypair.privateKey ) )
+    .then( exportedPrivateKey => privateKey = exportedPrivateKey)
     .then( () => window.crypto.subtle.exportKey( "jwk", keypair.publicKey ) )
     .then( buff => publicKey = buff)
     .then( () => ({ privateKey, publicKey }) )
@@ -353,5 +367,3 @@ function Slider({ label, callback }: { label: string, callback: (e: any) => void
   </Form.Group>
 );
 }
-
-export default ConfigureInstallation;
