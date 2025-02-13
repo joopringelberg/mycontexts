@@ -16,9 +16,10 @@
   , "invitationimportdialog_ConfirmationLabel": "Enter the code received from the person who sent the invitation:"
   , "invitationimportdialog_Submit": "Submit code"
   , "invitationimportdialog_InvalidCode": "This code is invalid. Try again or abort."
+  , "installation_title": "MyContexts installation"
   , "savekeypairdialog_Title": "Save public-private keypair"
-  , "savekeypairdialog_Message": "You MUST save the pair of cryptographic keys generated for this installation. You will need them if you want to create a secondary installation on another device, or when you have to restore your installation. Download the file and keep it save!"
-  , "savekeypairdialog_Download": "Download the keypair file"
+  , "savekeypairdialog_Message": "In the background, MyContexts is being installed as a WebApp in your browser. Once that is completed, you can start engaging with the community of MyContexts users. Just as you use a passport to travel the world, you use a MyContexts passport to navigate within this community. I highly recommend downloading and securely storing this 'passport' now. There won't be another opportunity to do so later! You will need it if you want to install MyContexts on another device or if you need to reinstall."
+  , "savekeypairdialog_Download": "Download your MyContexts-passport"
   , "keypairNotSaved_message": "Because the public-private keypair has not been saved, this installation is aborted."
   , "uploadkeypairdialog_Title": "Upload cryptographic keypair"
   , "uploadkeypairdialog_Message": "If you have a file holding a cryptographic keypair and a Perspectives Identity file, obtained from a previous installation, upload them here to re-use them. You would typically do this if you are creating a secondary installation on another device, or when you are restoring a previous installation."
@@ -77,4 +78,5 @@
   , "faqContent_Wie_heeft_MyContexts_gemaakt": "MyContext is the result of more than seven years of hard work by Joop Ringelberg and Cor Baars. Both Cognitive Scientists and experienced IT professionals."
   , "faqContent_Waarom_is_dit_nooit_eerder_gedaan": "You understand that companies that lure you to their servers to make money from it do not find this a good idea and do not invest in it. Furthermore, despite the simplicity of the idea, it is very complex to create. We have worked on it for more than seven years for a reason."
   , "faqContent_Waar_kan_ik_meer_informatie_vinden_over_MyContexts": "You understand that companies that lure you to their servers to make money from it do not find this a good idea and do not invest in it. Furthermore, despite the simplicity of the idea, it is very complex to create. We have worked on it for more than seven years for a reason."
+  , "installationcomplete_button": "Start using MyContexts"
 }

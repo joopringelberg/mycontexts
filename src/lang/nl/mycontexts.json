@@ -16,9 +16,10 @@
   , "invitationimportdialog_ConfirmationLabel": "Vul de code in die je ontvangen hebt van de persoon die de uitnodiging stuurde:"
   , "invitationimportdialog_Submit": "Bevestig code"
   , "invitationimportdialog_InvalidCode": "Deze code is ongeldig. Probeer opnieuw of stop."
+  , "installation_title": "MyContexts installatie"
   , "savekeypairdialog_Title": "Bewaar het public-private keypair"
-  , "savekeypairdialog_Message": "Je MOET het paar cryptografische sleutels dat voor deze installatie is gemaakt, opslaan. Je hebt ze nodig om een tweede installatie op een ander device te maken, of om je installatie te herstellen. Download het bestand en bewaar het goed!"
-  , "savekeypairdialog_Download": "Download het keypair bestand"
+  , "savekeypairdialog_Download": "Download jouw MyContexts-paspoort"
+  , "savekeypairdialog_Message": "Op de achtergrond wordt MyContexts wordt geïnstalleerd als WebApp in jouw browser. Als dat is voltooid, kun je je gaan bewegen in de gemeenschap van MyContexts gebruikers. Zoals je een paspoort gebruikt om door de wereld te reizen, gebruik je een MyContexts-paspoort om je in deze gemeenschap te bewegen. Ik raad je ten zeerste aan om dat 'paspoort' nu te downloaden en veilig te bewaren. Een latere gelegenheid om dat te doen is er niet! Je hebt het nodig als je MyContexts op een ander apparaat wil installeren, of wanneer je opnieuw moet installeren."
   , "keypairNotSaved_message": "Omdat het public-private keypair niet is opgeslagen, wordt de installatie afgebroken."
   , "uploadkeypairdialog_Title": "Upload een cryptografisch keypair"
   , "uploadkeypairdialog_Message": "Als je een bestand met een cryptografisch keypair en een Identity document hebt gedownload bij een vorige installatie, upload ze nu om ze te hergebruiken. Doe dat als je nu een tweede installatie maakt op een ander device, of als je een installatie herstelt."
@@ -76,4 +77,5 @@
   , "faqContent_Wie_heeft_MyContexts_gemaakt": "MyContext is het resultaat van meer dan zeven jaar noeste arbeid van Joop Ringelberg en Cor Baars. Beide Cognitie Wetenschappers en ervaren IT-ers."
   , "faqContent_Waarom_is_dit_nooit_eerder_gedaan": "Je begrijpt dat bedrijven die je naar hun servers lokken om daar geld aan te verdienen dit geen goed idee vinden en hier niet in investeren. Verder is het, ondanks de eenvoud van het idee, erg complex om te maken. We hebben er niet voor niets meer dan zeven jaar aan gewerkt."
   , "faqContent_Waar_kan_ik_meer_informatie_vinden_over_MyContexts": "Je begrijpt dat bedrijven die je naar hun servers lokken om daar geld aan te verdienen dit geen goed idee vinden en hier niet in investeren. Verder is het, ondanks de eenvoud van het idee, erg complex om te maken. We hebben er niet voor niets meer dan zeven jaar aan gewerkt."
+  , "installationcomplete_button": "Begin MyContexts"
 }

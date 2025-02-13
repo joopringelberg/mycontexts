@@ -19,6 +19,8 @@
     "perspectives-core": "file:/Users/joopringelberg/Code/perspectives-core",
     "perspectives-proxy": "file:/Users/joopringelberg/Code/perspectives-proxy",
     "perspectives-react": "file:/Users/joopringelberg/Code/perspectives-react",
+    "perspectives-pageworker": "file:/Users/joopringelberg/Code/perspectives-pageworker",
+    "perspectives-sharedworker": "file:/Users/joopringelberg/Code/perspectives-sharedworker",
     "react": "^18.3.1",
     "react-bootstrap": "^2.10.8",
     "react-dom": "^18.3.1",

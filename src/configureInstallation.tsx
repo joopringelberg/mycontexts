@@ -27,7 +27,7 @@ export interface InstallationData {
 }
 export type InstallationResult = KeyPairData | NoKeyPairData;
 
-export interface NoKeyPairData {type: 'NoKeyPairData'}
+export interface NoKeyPairData {type: 'NoKeyPairData', perspectivesUserId: string}
 
 export interface KeyPairData {
   type: 'KeyPairData';
@@ -233,6 +233,7 @@ const InstallModal: FC<{ show: boolean; onHide: () => void, callback: (data: Ins
         // clear values from indexedDB
         deleteValue('deviceName');
         deleteValue('identityFile');
+        // setValue( perspectivesUserId + PUBLICKEY, keyPair.publicKey )
         deleteValue('privateKey');
         deleteValue('publicKey');
         deleteValue('couchdbUrl');
@@ -272,12 +273,14 @@ function handleInstall ( { deviceName, keyPair, identityFile, couchdbUrl, couchd
   } else {
     perspectivesUserId = cuid2();
   }
+  setValue('perspectivesUserId', perspectivesUserId);
+  
   // If there is no privateKey, generate a new keypair.
   if (keyPair) {
     // Save the private key in a way that it cannot be exported.
     setValue( perspectivesUserId + PUBLICKEY, keyPair.publicKey )
     setValue( perspectivesUserId + PRIVATEKEY, keyPair.privateKey )
-    callback({type: 'NoKeyPairData'});
+    callback({type: 'NoKeyPairData', perspectivesUserId});
   }
     else {
     // Generate a new keypair

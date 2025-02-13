@@ -11,7 +11,13 @@
     "baseUrl": ".",
     "outDir": "dist",
     "allowImportingTsExtensions": true,
-    "noEmit": true
+    "noEmit": true,
+    "paths": {
+      "perspectives-core": ["/Users/joopringelberg/Code/perspectives-core/dist/perspectives-core.js"],
+      "/perspectives-core.js": ["/Users/joopringelberg/Code/perspectives-core/dist/perspectives-core.js"],
+      "perspectives-pageworker": ["/Users/joopringelberg/Code/perspectives-pageworker/dist/perspectives-pageworker.js"],
+      "perspectives-sharedworker": ["/Users/joopringelberg/Code/perspectives-sharedworker/dist/perspectives-sharedworker.js"],
+    }
   },
   "include": ["src"],
   "exclude": ["node_modules"]
