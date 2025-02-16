@@ -1,10 +1,8 @@
 import { useState, ReactElement, FC, ChangeEvent, MouseEventHandler } from 'react';
 import { Container, Navbar, Button, Modal, Form, Col, Row } from 'react-bootstrap';
-import 'bootswatch/dist/lumen/bootstrap.min.css';
 import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
 import Tooltip from 'react-bootstrap/Tooltip';
 import { set as setValue, del as deleteValue} from 'idb-keyval';
-import './app.css';
 import {init} from '@paralleldrive/cuid2';
 import { takeCUID } from 'perspectives-react';
 import i18next from 'i18next';

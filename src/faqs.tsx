@@ -1,7 +1,5 @@
 import { FC } from 'react';
 import { Modal } from 'react-bootstrap';
-import 'bootswatch/dist/lumen/bootstrap.min.css';
-import './app.css';
 import i18next from 'i18next';
 
 export const FAQModal: FC<{ show: boolean; onHide: () => void }> = ({ show, onHide }) => (

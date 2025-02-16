@@ -28,8 +28,6 @@ import
 
 import './splash.css';
 
-import 'bootswatch/dist/lumen/bootstrap.min.css';
-
 import {thisAppsLocation} from "perspectives-react";
 
 import { SharedWorkerChannelPromise as PDRHandler } from 'perspectives-proxy';

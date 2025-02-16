@@ -1,0 +1,179 @@
+import { Component } from 'react';
+import { Accordion, Col, Container, Nav, Navbar, Offcanvas, Row, Tab, Tabs } from 'react-bootstrap';
+import './www.css';
+import MSComponent from './mscomponent';
+
+type Section = 'who' | 'what' | 'where';
+
+interface WWWComponentState {
+  isSmallScreen: boolean;
+  title: string;
+  doubleSection: Section;
+  showNotifications: boolean;
+  activeSection: Section;
+}
+
+class WWWComponent extends Component<{}, WWWComponentState> {
+  constructor(props: {}) {
+    super(props);
+    // startPDR();
+    this.state = { isSmallScreen: false, title: 'MyContexts', doubleSection: 'what', showNotifications: false, activeSection: 'what' };
+    this.checkScreenSize = this.checkScreenSize.bind(this);
+  }
+
+  componentDidMount() {
+    window.addEventListener('resize', this.checkScreenSize);
+    this.checkScreenSize()
+  }
+
+  checkScreenSize(){
+    const navbar = document.querySelector('#top-navbar');
+    const mobileTabs = document.querySelector('#mobile-tabs');
+    // Includes the padding of the navbar.
+    const navbarHeight = navbar ? (navbar as HTMLElement).offsetHeight : 40;
+    const mobileTabsHeight = mobileTabs ? (mobileTabs as HTMLElement).offsetHeight : 48;
+    // Set the CSS variable for the navbar height. This is incorporated in the CSS style full-height.
+    document.documentElement.style.setProperty('--navbar-height', `${navbarHeight}px`);
+    document.documentElement.style.setProperty('--tabs-height', `${mobileTabsHeight}px`); 
+    this.setState(
+      { isSmallScreen: window.innerWidth < 768 });
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.checkScreenSize);
+  }
+
+  notificationsAndClipboard() {
+    const component = this;
+    return (
+      <Offcanvas show={this.state.showNotifications} onHide={() => component.setState({showNotifications:false})} placement='bottom' scroll={true} style={{ height: '50vh' }}>
+        <Offcanvas.Header closeButton>
+          <Offcanvas.Title>Clipboard & Notifications</Offcanvas.Title>
+        </Offcanvas.Header>
+        <Offcanvas.Body>
+        <Accordion defaultActiveKey="0">
+          <Accordion.Item eventKey="0">
+            <Accordion.Header>Clipboard</Accordion.Header>
+            <Accordion.Body>
+              <ul>
+                <li>Item 1</li>
+                <li>Item 2</li>
+                <li>Item 3</li>
+              </ul>
+            </Accordion.Body>
+          </Accordion.Item>
+          <Accordion.Item eventKey="1">
+            <Accordion.Header>Notifications</Accordion.Header>
+            <Accordion.Body>
+              <ul>
+                <li>Notification 1</li>
+                <li>Notification 2</li>
+                <li>Notification 3</li>
+              </ul>
+            </Accordion.Body>
+          </Accordion.Item>
+        </Accordion>
+        </Offcanvas.Body>
+    </Offcanvas>
+    );
+  }
+
+  render() {
+    const component = this;
+    if (this.state.isSmallScreen) {
+      return (
+        <>
+          <Container fluid className='px-0'>
+            <Navbar bg="info" expand="xs" className="justify-content-center py-0" id="top-navbar">
+              <Navbar.Brand href="#home" className='text-light'>{this.state.title}</Navbar.Brand>
+            </Navbar>
+            <Tabs
+              id="mobile-tabs"
+              activeKey={this.state.activeSection}
+              onSelect={(k: string | null) => {
+                const key = k || 'what';
+                component.setState({ 'activeSection': k as Section });
+                }}
+              fill
+              >
+              <Tab eventKey="who" title="Wie" className='bg-info full-mobile-height' style={{'--bs-bg-opacity': '.2'}}>
+                <Container className='px-1'>
+                  <p className='bg-light-subtle mx-1'>Weergave van de perspectieven op wie.</p>
+                </Container>
+              </Tab>
+              <Tab eventKey="what" title="Wat" className='bg-info full-mobile-height' style={{'--bs-bg-opacity': '.4'}}>
+                <Container className='px-1'>
+                  <MSComponent isMobile={this.state.isSmallScreen} />
+                </Container>
+              </Tab>
+              <Tab eventKey="where" title="Waar" className='bg-info full-mobile-height' style={{'--bs-bg-opacity': '.6'}}>
+                <Container className='px-1'>
+                  <p className='bg-light-subtle mx-1'>Weergave van de perspectieven op waar.</p>
+                </Container>
+              </Tab>
+            </Tabs>
+            <Navbar fixed="bottom" bg="info" expand="xs" className="justify-content-center py-0">
+              <Navbar.Brand onClick={() => component.setState({ showNotifications: true })}>
+                <i className="bi bi-arrow-up"></i>
+              </Navbar.Brand>
+          </Navbar>
+          </Container>
+          {this.notificationsAndClipboard()}
+        </>
+      );
+    }
+    else {
+      return (
+        <>
+        <Container fluid className='px-0'>
+          <Navbar bg="info" expand="xs" className="justify-content-center py-0" id="top-navbar">
+            <Navbar.Brand href="#home" className='text-light'>{this.state.title}</Navbar.Brand>
+          </Navbar>
+          <Row className='mx-0'>
+            <Col 
+              className='bg-info full-height' 
+              xs={ this.state.doubleSection === "who" ? 6 : 3} 
+              style={{'--bs-bg-opacity': '.2'}}>
+                <Row onClick={() => component.setState( {'doubleSection': "who"} )}><h4 className='text-center'>Wie</h4></Row>
+                <Row>
+                  <Container className='px-1'>
+                    <p className='bg-light-subtle mx-1'>Weergave van de perspectieven op wie.</p>
+                  </Container>
+                </Row>
+            </Col>
+            <Col 
+              className='bg-info' 
+              xs={ this.state.doubleSection === "what" ? 6 : 3} 
+              style={{'--bs-bg-opacity': '.4'}}>
+              <Row onClick={() => component.setState( {'doubleSection': "what"} )}  ><h4 className='text-center'>Wat</h4></Row>
+              <Row>
+                <Container className='px-1' >
+                <MSComponent isMobile={this.state.isSmallScreen || this.state.doubleSection !== "what"} />
+                  </Container>
+                </Row>
+            </Col>
+            <Col 
+              className='bg-info' 
+              xs={ this.state.doubleSection === "where" ? 6 : 3} 
+              style={{'--bs-bg-opacity': '.6'}}>
+              <Row onClick={() => component.setState( {'doubleSection': "where"} )}  ><h4 className='text-center'>Waar</h4></Row>  
+              <Row>
+                <Container className='px-1' ><p className='bg-light-subtle'>Weergave van de perspectieven op wat.</p>
+                </Container>
+              </Row>
+            </Col>
+          </Row>
+          <Navbar fixed="bottom" bg="info" expand="xs" className="justify-content-center py-0">
+            <Navbar.Brand onClick={() => component.setState({ showNotifications: true })}>
+              <i className="bi bi-arrow-up"></i>
+            </Navbar.Brand>
+          </Navbar>
+        </Container>
+        {this.notificationsAndClipboard()}
+        </>
+      );
+    }
+  }
+}
+
+export default WWWComponent;

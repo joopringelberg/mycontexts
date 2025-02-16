@@ -1,5 +1,6 @@
 import { Component, ReactElement } from 'react'
-import './App.css'
+import 'bootswatch/dist/lumen/bootstrap.min.css';
+import 'bootstrap-icons/font/bootstrap-icons.css';
 import { set as setValue, get as getValue } from 'idb-keyval';
 import ConfigureInstallation, { InstallationData, InstallationResult } from './configureInstallation';
 import {initI18next} from "./i18next.js";
@@ -9,6 +10,7 @@ import { SharedWorkerChannelPromise as PDRHandler, configurePDRproxy, PDRproxy, 
 import { constructPouchdbUser, getInstallationData } from './installationData.js';
 import { startPDR } from './startPDR.js';
 import { Button, Container, Row } from 'react-bootstrap';
+import WWWComponent from './www.js';
 
 await initI18next();
 
@@ -30,7 +32,8 @@ export default class App extends Component<{}, AppState>
   }
 
   componentDidMount(): void {
-    isInstallationComplete().then((isComplete: boolean) => {
+    getValue('installationComplete').then((value: boolean) => value)
+    .then((isComplete: boolean) => {
       if (isComplete) {
         this.setState({ phase: 'installationExists' });
       } else {
@@ -104,14 +107,7 @@ export default class App extends Component<{}, AppState>
   {
     switch (this.state.phase) {
       case 'installationExists':
-      return (
-        <div className="App">
-        <header className="App-header">
-          <h1>MyContexts</h1>
-          <>This is where the WWW interface starts</>
-        </header>
-        </div>
-      );
+      return <WWWComponent />;
       case 'prepareInstallation':
       return <ConfigureInstallation callback={ (installationResult : InstallationResult) =>{
           this.setState({ phase: 'installing', installationResult });
@@ -127,9 +123,3 @@ export default class App extends Component<{}, AppState>
     }
   }
 }
-
-function isInstallationComplete(): Promise<boolean> 
-{
-  return getValue('installationComplete').then((value: boolean) => value);
-}
-
