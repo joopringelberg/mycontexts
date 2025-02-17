@@ -79,4 +79,7 @@
   , "faqContent_Waarom_is_dit_nooit_eerder_gedaan": "You understand that companies that lure you to their servers to make money from it do not find this a good idea and do not invest in it. Furthermore, despite the simplicity of the idea, it is very complex to create. We have worked on it for more than seven years for a reason."
   , "faqContent_Waar_kan_ik_meer_informatie_vinden_over_MyContexts": "You understand that companies that lure you to their servers to make money from it do not find this a good idea and do not invest in it. Furthermore, despite the simplicity of the idea, it is very complex to create. We have worked on it for more than seven years for a reason."
   , "installationcomplete_button": "Start using MyContexts"
+  , "leftPanel_me": "Me"
+  , "leftPanel_apps": "Apps"
+  , "leftPanel_settings": "Settings"
 }

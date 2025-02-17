@@ -3,6 +3,7 @@ import { Accordion, Col, Container, Nav, Navbar, NavDropdown, Offcanvas, Row, Ta
 import './www.css';
 import MSComponent from './mscomponent';
 import { MainContentStub, SlidingPanelContentStub } from './contentStubs';
+import i18next from 'i18next';
 
 type Section = 'who' | 'what' | 'where';
 
@@ -11,7 +12,7 @@ interface WWWComponentState {
   title: string;
   doubleSection: Section;
   showNotifications: boolean;
-  showLeftPanel: boolean;
+  leftPanelContent: 'about' | 'me' | 'settings' | 'apps' | false;
   activeSection: Section;
 }
 
@@ -19,7 +20,7 @@ class WWWComponent extends Component<{}, WWWComponentState> {
   constructor(props: {}) {
     super(props);
     // startPDR();
-    this.state = { isSmallScreen: false, title: 'MyContexts', doubleSection: 'what', showNotifications: false, showLeftPanel: false, activeSection: 'what' };
+    this.state = { isSmallScreen: false, title: 'MyContexts', doubleSection: 'what', showNotifications: false, leftPanelContent: false, activeSection: 'what' };
     this.checkScreenSize = this.checkScreenSize.bind(this);
   }
 
@@ -82,13 +83,30 @@ class WWWComponent extends Component<{}, WWWComponentState> {
 
   leftPanel() {
     const component = this;
+    let content;
+    switch (this.state.leftPanelContent) {
+      case 'about':
+        content = <p>About</p>;
+        break;
+      case 'me':
+        content = <p>Me</p>;
+        break;
+      case 'apps':
+        content = <p>Apps</p>;
+        break;
+      case 'settings':
+        content = <p>Settings</p>;
+        break;
+      default:
+        return null;
+    }
     return (
-      <Offcanvas show={this.state.showLeftPanel} onHide={() => component.setState({showLeftPanel:false})} placement='start' scroll={true} style={{ height: '100vh' }}>
+      <Offcanvas show={this.state.leftPanelContent} onHide={() => component.setState({leftPanelContent:false})} placement='start' scroll={true} style={{ height: '100vh' }}>
         <Offcanvas.Header closeButton>
-          <Offcanvas.Title>Left Panel</Offcanvas.Title>
+          <Offcanvas.Title>{ this.state.leftPanelContent ? i18next.t( 'leftPanel_' + this.state.leftPanelContent, {ns: 'mycontexts'}) : ""}</Offcanvas.Title>
         </Offcanvas.Header>
         <Offcanvas.Body>
-          <p>Me, Settings and Apps here.</p>
+          { content }
         </Offcanvas.Body>
     </Offcanvas>
     );
@@ -108,16 +126,16 @@ class WWWComponent extends Component<{}, WWWComponentState> {
           }}
         fill
         >
-        <Tab eventKey="who" title="Wie" className='bg-info full-mobile-height px-2' style={{'--bs-bg-opacity': '.2'}}>
+        <Tab eventKey="who" title="Wie" className='bg-info full-mobile-height px-2' style={{'--bs-bg-opacity': '.2'} as React.CSSProperties}>
           <p className='bg-light-subtle'>Weergave van de perspectieven op wie.</p>
         </Tab>
-        <Tab eventKey="what" title="Wat" className='bg-info full-mobile-height px-2' style={{'--bs-bg-opacity': '.4'}}>
+        <Tab eventKey="what" title="Wat" className='bg-info full-mobile-height px-2' style={{'--bs-bg-opacity': '.4'} as React.CSSProperties}>
           <MSComponent isMobile={this.state.isSmallScreen}  className='bg-light-subtle'>
             <MainContentStub/>
             <SlidingPanelContentStub/>
           </MSComponent>
         </Tab>
-        <Tab eventKey="where" title="Waar" className='bg-info full-mobile-height px-2' style={{'--bs-bg-opacity': '.6'}}>
+        <Tab eventKey="where" title="Waar" className='bg-info full-mobile-height px-2' style={{'--bs-bg-opacity': '.6'} as React.CSSProperties}>
           <p className='bg-light-subtle'>Weergave van de perspectieven op waar.</p>
         </Tab>
       </Tabs>
@@ -134,9 +152,10 @@ class WWWComponent extends Component<{}, WWWComponentState> {
     const component = this;
     return (<Navbar bg="info" expand="xs" className="py-0" id="top-navbar">
       <NavDropdown title={<i className="bi bi-list"></i>} className="me-auto">
-        <NavDropdown.Item onClick={() => component.setState({showLeftPanel: true})}>Me</NavDropdown.Item>
-        <NavDropdown.Item onClick={() => component.setState({showLeftPanel: true})}>Apps</NavDropdown.Item>
-        <NavDropdown.Item onClick={() => component.setState({showLeftPanel: true})}>Settings</NavDropdown.Item>
+        <NavDropdown.Item onClick={() => component.setState({leftPanelContent: 'about'})}>About...</NavDropdown.Item>
+        <NavDropdown.Item onClick={() => component.setState({leftPanelContent: 'me'})}>Me</NavDropdown.Item>
+        <NavDropdown.Item onClick={() => component.setState({leftPanelContent: 'apps'})}>Apps</NavDropdown.Item>
+        <NavDropdown.Item onClick={() => component.setState({leftPanelContent: 'settings'})}>Settings</NavDropdown.Item>
       </NavDropdown>
       <Navbar.Brand href="#home" className='text-light flex-grow-1 d-flex justify-content-center align-items-center'>{this.state.title}</Navbar.Brand>
     </Navbar>);
@@ -150,7 +169,7 @@ class WWWComponent extends Component<{}, WWWComponentState> {
         <Col 
           className='bg-info full-height' 
           xs={ this.state.doubleSection === "who" ? 6 : 3} 
-          style={{'--bs-bg-opacity': '.2'}}>
+          style={{'--bs-bg-opacity': '.2'} as React.CSSProperties}>
             <Row onClick={() => component.setState( {'doubleSection': "who"} )}><h4 className='text-center'>Wie</h4></Row>
             <Row className='px-1'>
                 <p className='bg-light-subtle'>Weergave van de perspectieven op wie.</p>
@@ -159,7 +178,7 @@ class WWWComponent extends Component<{}, WWWComponentState> {
         <Col 
           className='bg-info' 
           xs={ this.state.doubleSection === "what" ? 6 : 3} 
-          style={{'--bs-bg-opacity': '.4'}}>
+          style={{'--bs-bg-opacity': '.4'} as React.CSSProperties}>
           <Row onClick={() => component.setState( {'doubleSection': "what"} )}  ><h4 className='text-center'>Wat</h4></Row>
           {/* In the desktop, MSComponent will render a row with px-1 */}
           <MSComponent isMobile={this.state.isSmallScreen || this.state.doubleSection !== "what"} className='bg-light-subtle'>
@@ -170,7 +189,7 @@ class WWWComponent extends Component<{}, WWWComponentState> {
         <Col 
           className='bg-info' 
           xs={ this.state.doubleSection === "where" ? 6 : 3} 
-          style={{'--bs-bg-opacity': '.6'}}>
+          style={{'--bs-bg-opacity': '.6'} as React.CSSProperties}>
           <Row onClick={() => component.setState( {'doubleSection': "where"} )}  ><h4 className='text-center'>Waar</h4></Row>  
           <Row className='px-1'>
             <p className='bg-light-subtle'>Weergave van de perspectieven op waar.</p>

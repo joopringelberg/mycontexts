@@ -6,8 +6,9 @@ import { default as thepackage } from './package.json'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: "/www/",
   server: {
-    port: 5177, // Stel een vaste poort in
+    port: 5177, // Set a fixed port
     fs: {
       allow: [
         // Allow serving files from these directories
@@ -18,7 +19,7 @@ export default defineConfig({
         '/Users/joopringelberg/Code/perspectives-pageworker',
         '/Users/joopringelberg/Code/perspectives-sharedworker'
       ]
-     }
+    }
   },
   plugins: [
     react(),
@@ -37,12 +38,17 @@ export default defineConfig({
     include: ['react', 'react-dom']
   },
   build: {
+    target: 'es2023',
     rollupOptions: {
       input: {
         main: './index.html',
-        manage: './manage.html',
-        sharedWorker: '/Users/joopringelberg/Code/perspectives-sharedworker/dist/perspectives-sharedworker'
-      }
+        manage: './manage.html'
+      },
+      external: [
+        '/Users/joopringelberg/Code/perspectives-core/dist/perspectives-core.js',
+        '/Users/joopringelberg/Code/perspectives-pageworker/dist/perspectives-pageworker.js',
+        '/Users/joopringelberg/Code/perspectives-sharedworker/dist/perspectives-sharedworker.js'
+      ]
     }
   },
   define: {
