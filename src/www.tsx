@@ -1,5 +1,5 @@
 import { Component, createRef } from 'react';
-import { Accordion, Col, Container, Nav, Navbar, Offcanvas, Row, Tab, Tabs } from 'react-bootstrap';
+import { Accordion, Col, Container, Nav, Navbar, NavDropdown, Offcanvas, Row, Tab, Tabs } from 'react-bootstrap';
 import './www.css';
 import MSComponent from './mscomponent';
 import { MainContentStub, SlidingPanelContentStub } from './contentStubs';
@@ -11,6 +11,7 @@ interface WWWComponentState {
   title: string;
   doubleSection: Section;
   showNotifications: boolean;
+  showLeftPanel: boolean;
   activeSection: Section;
 }
 
@@ -18,7 +19,7 @@ class WWWComponent extends Component<{}, WWWComponentState> {
   constructor(props: {}) {
     super(props);
     // startPDR();
-    this.state = { isSmallScreen: false, title: 'MyContexts', doubleSection: 'what', showNotifications: false, activeSection: 'what' };
+    this.state = { isSmallScreen: false, title: 'MyContexts', doubleSection: 'what', showNotifications: false, showLeftPanel: false, activeSection: 'what' };
     this.checkScreenSize = this.checkScreenSize.bind(this);
   }
 
@@ -79,13 +80,25 @@ class WWWComponent extends Component<{}, WWWComponentState> {
     );
   }
 
+  leftPanel() {
+    const component = this;
+    return (
+      <Offcanvas show={this.state.showLeftPanel} onHide={() => component.setState({showLeftPanel:false})} placement='start' scroll={true} style={{ height: '100vh' }}>
+        <Offcanvas.Header closeButton>
+          <Offcanvas.Title>Left Panel</Offcanvas.Title>
+        </Offcanvas.Header>
+        <Offcanvas.Body>
+          <p>Me, Settings and Apps here.</p>
+        </Offcanvas.Body>
+    </Offcanvas>
+    );
+  }
+
   renderMobile ()
   {
     const component = this;
     return (<Container fluid className='px-0'>
-      <Navbar bg="info" expand="xs" className="justify-content-center py-0" id="top-navbar">
-        <Navbar.Brand href="#home" className='text-light'>{this.state.title}</Navbar.Brand>
-      </Navbar>
+      {component.renderTopNavBar()}
       <Tabs
         id="mobile-tabs"
         activeKey={this.state.activeSection}
@@ -116,12 +129,23 @@ class WWWComponent extends Component<{}, WWWComponentState> {
     </Container>
     );
   }
+
+  renderTopNavBar() {
+    const component = this;
+    return (<Navbar bg="info" expand="xs" className="py-0" id="top-navbar">
+      <NavDropdown title={<i className="bi bi-list"></i>} className="me-auto">
+        <NavDropdown.Item onClick={() => component.setState({showLeftPanel: true})}>Me</NavDropdown.Item>
+        <NavDropdown.Item onClick={() => component.setState({showLeftPanel: true})}>Apps</NavDropdown.Item>
+        <NavDropdown.Item onClick={() => component.setState({showLeftPanel: true})}>Settings</NavDropdown.Item>
+      </NavDropdown>
+      <Navbar.Brand href="#home" className='text-light flex-grow-1 d-flex justify-content-center align-items-center'>{this.state.title}</Navbar.Brand>
+    </Navbar>);
+  }
+
   renderDesktop() {
     const component = this;
     return (<Container fluid className='px-0'>
-      <Navbar bg="info" expand="xs" className="justify-content-center py-0" id="top-navbar">
-        <Navbar.Brand href="#home" className='text-light'>{this.state.title}</Navbar.Brand>
-      </Navbar>
+      {component.renderTopNavBar()}
       <Row className='mx-0'>
         <Col 
           className='bg-info full-height' 
@@ -165,6 +189,7 @@ class WWWComponent extends Component<{}, WWWComponentState> {
     return (<> 
       {this.state.isSmallScreen ? this.renderMobile() : this.renderDesktop()}
       {this.notificationsAndClipboard()}
+      {this.leftPanel()}
     </>);
   }
 }

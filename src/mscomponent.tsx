@@ -49,6 +49,14 @@ class MSComponent extends Component<MSComponentProps, MSComponentState> {
     }
   }
 
+  componentDidUpdate(prevProps: MSComponentProps): void {
+    if (prevProps.isMobile !== this.props.isMobile && this.eventRef.current) {
+      // Remove the event listener from the previous element
+      this.eventRef.current.removeEventListener('SetSelectRow', this.setSelectRow as EventListener, true);
+      // Add the event listener to the new element
+      this.eventRef.current.addEventListener('SetSelectRow', this.setSelectRow as EventListener, true);
+    }
+  }
   componentWillUnmount(): void {
     const component = this;
     if (component.eventRef.current) {
