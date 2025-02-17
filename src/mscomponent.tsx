@@ -1,69 +1,94 @@
-import { Component, createRef } from "react";
-import { Col, Row } from "react-bootstrap";
-
-/*
-  * The Master-Slave component is always embeded in a Container element.
-*/
+import { Component, ReactNode } from "react";
+import { Button, CloseButton, Col, Container, Navbar, Row } from "react-bootstrap";
+import "./slidingPanels.css";
+import * as React from "react";
 
 type RoleInstance = string;
 
 type RoleInstanceSelectionEvent = Event & { detail: { roleInstance: RoleInstance } };
 
 interface MSComponentState {
-  selectedRoleInstance : RoleInstance | undefined;
+  selectedRoleInstance: RoleInstance | undefined;
   isFormVisible: boolean;
+}
+
+export interface MainContentProps {
+  className?: string;
+}
+
+export interface SlidingPanelContentProps {
+  className?: string;
+  selectedRoleInstance?: RoleInstance;
 }
 
 interface MSComponentProps {
   isMobile: boolean;
+  children: [React.ReactElement<MainContentProps>, React.ReactElement<SlidingPanelContentProps>];
+  className?: string;
 }
 
 class MSComponent extends Component<MSComponentProps, MSComponentState> {
-  private eventDiv: React.RefObject<HTMLDivElement>;
+  private eventRef: React.RefObject<HTMLDivElement>;
 
   constructor(props: MSComponentProps) {
     super(props);
     this.state = { selectedRoleInstance: undefined, isFormVisible: false };
-    this.eventDiv = createRef();
+    this.setSelectRow = this.setSelectRow.bind(this);
+    this.eventRef = React.createRef();
   }
+
+  setSelectRow = (event: RoleInstanceSelectionEvent) => {
+    this.setState({ selectedRoleInstance: event.detail.roleInstance, isFormVisible: this.props.isMobile });
+  };
 
   componentDidMount(): void {
     const component = this;
-    if (component.eventDiv.current) {
-      component.eventDiv.current.addEventListener('SetSelectRow',
-        function (e)
-        {
-          const customEvent = e as RoleInstanceSelectionEvent;
-          component.setState({ selectedRoleInstance: customEvent.detail.roleInstance });
-          e.stopPropagation();
-        },
-        false);
+    if (component.eventRef.current) {
+      // The event is not handled during the bubbling phase, but during the capturing phase.
+      component.eventRef.current.addEventListener('SetSelectRow', this.setSelectRow as EventListener, true);
     }
   }
+
+  componentWillUnmount(): void {
+    const component = this;
+    if (component.eventRef.current) {
+      component.eventRef.current.removeEventListener('SetSelectRow', this.setSelectRow as EventListener, true);
+    }
+  }
+
   render() {
     const component = this;
-    // Note: there is no need to throw the event from eventDiv. Any element can throw the event.
-    function setSelectRow(roleInstance: RoleInstance) {
-      const event = new CustomEvent('SetSelectRow', { detail: { roleInstance: roleInstance } });
-      if (component.eventDiv.current) {
-        component.eventDiv.current.dispatchEvent(event);
-      }
+    const { children } = this.props;
+
+    if (!children || children.length !== 2) {
+      console.error("MSComponent requires exactly two children: <MainContent /> and <SlidingPanelContent />");
+      return null;
     }
-    function deselectRow() {
-      component.setState({ selectedRoleInstance: undefined });
+
+    const [mainContent, slidingContent] = children;
+
+    if (component.props.isMobile) {
+      return (
+        <div className="sliding-panels-container" ref={this.eventRef}>
+          {/* Main Panel */}
+          <div className="main-panel">
+            {React.cloneElement(mainContent as React.ReactElement<any>, { className: this.props.className })}
+          </div>
+
+          {/* Cover Panel */}
+            <div className={`cover-panel ${this.state.isFormVisible ? "open" : ""} bg-info`}>
+            <CloseButton onClick={() => component.setState({ isFormVisible: false })} />
+            {React.cloneElement(slidingContent as React.ReactElement<any>, { className: this.props.className, selectedRoleInstance: this.state.selectedRoleInstance })}
+            </div>
+        </div>
+      );
     }
-    return (<Row className='bg-light-subtle' ref={this.eventDiv}>
-        <Col className={`transition ${this.props.isMobile && this.state.selectedRoleInstance ? 'slide-out-to-right' : 'slide-in-from-right'}`}>
-          <ul>
-            <li onClick={setSelectRow.bind(this, 'Melk')}>Melk</li>
-            <li onClick={setSelectRow.bind(this, 'Kaas')}>Kaas</li>
-          </ul>
-          </Col>
-          <Col 
-            className={`transition ${this.props.isMobile && !this.state.selectedRoleInstance ? 'slide-out-to-right' : 'slide-in-from-right'} bg-info`}
-            onClick={deselectRow}
-            >Form with details of {this.state.selectedRoleInstance}</Col>
-      </Row>);
+    else {
+      return (<Row className="px-1" ref={this.eventRef}>
+        <Col>{React.cloneElement(mainContent as React.ReactElement<any>, { className: this.props.className })}</Col>
+        <Col>{React.cloneElement(slidingContent as React.ReactElement<any>, { className: this.props.className, selectedRoleInstance: this.state.selectedRoleInstance })}</Col>
+        </Row>)
+    }
   }
 }
 
