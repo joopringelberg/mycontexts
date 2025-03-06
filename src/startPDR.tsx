@@ -15,7 +15,9 @@ export function startPDR()
 
   // Preferrably we run the PDR in a SharedWorker. However, even while IOS supports SharedWorkers, it has no debugging 
   // facilities for SharedWorkers. As a result, we cannot use SharedWorkers on IOS.
-  if (typeof SharedWorker != "undefined" && !isIOS())
+  // Turns out that as of februari 2025, it runs in a SharedWorker even on IOS.
+  // if (typeof SharedWorker != "undefined" && !isIOS())
+  if (true)
   {
     // The proxy function configurePDRProxy will create a SharedWorker. The SharedWorker will load the PDR, using 'importScripts'
     // (dyanmic import is not supported in SharedWorkers).

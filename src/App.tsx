@@ -1,4 +1,4 @@
-import { Component, ReactElement } from 'react'
+import React, { Component, ReactElement } from 'react'
 import 'bootswatch/dist/lumen/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { set as setValue, get as getValue } from 'idb-keyval';

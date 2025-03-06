@@ -1,9 +1,11 @@
-import { Component, createRef } from 'react';
+import React, { Component } from 'react';
 import { Accordion, Col, Container, Nav, Navbar, NavDropdown, Offcanvas, Row, Tab, Tabs } from 'react-bootstrap';
 import './www.css';
 import MSComponent from './mscomponent';
 import { MainContentStub, SlidingPanelContentStub } from './contentStubs';
 import i18next from 'i18next';
+import { TableFormDef } from 'perspectives-proxy';
+import {MySystem} from 'perspectives-react';
 
 type Section = 'who' | 'what' | 'where';
 
@@ -14,6 +16,7 @@ interface WWWComponentState {
   showNotifications: boolean;
   leftPanelContent: 'about' | 'me' | 'settings' | 'apps' | false;
   activeSection: Section;
+  // apps: TableFormDef
 }
 
 class WWWComponent extends Component<{}, WWWComponentState> {
@@ -89,10 +92,10 @@ class WWWComponent extends Component<{}, WWWComponentState> {
         content = <p>About</p>;
         break;
       case 'me':
-        content = <p>Me</p>;
+        content = <p>A form that shows information about me (sys:SocialMe). A perspective with a specific view.</p>;
         break;
       case 'apps':
-        content = <p>Apps</p>;
+        content = <p>A table that shows all apps (IndexedContexts).</p>;
         break;
       case 'settings':
         content = <p>Settings</p>;
@@ -172,7 +175,8 @@ class WWWComponent extends Component<{}, WWWComponentState> {
           style={{'--bs-bg-opacity': '.2'} as React.CSSProperties}>
             <Row onClick={() => component.setState( {'doubleSection': "who"} )}><h4 className='text-center'>Wie</h4></Row>
             <Row className='px-1'>
-                <p className='bg-light-subtle'>Weergave van de perspectieven op wie.</p>
+                <p className='bg-light-subtle'>Here we render all TableFormDef elements that make up the Who part of the screen (the user roles), as Master-Slave components. </p>
+                <p className='bg-light-subtle'>Rendering of the chats in this context</p>
             </Row>
         </Col>
         <Col 
@@ -181,6 +185,7 @@ class WWWComponent extends Component<{}, WWWComponentState> {
           style={{'--bs-bg-opacity': '.4'} as React.CSSProperties}>
           <Row onClick={() => component.setState( {'doubleSection': "what"} )}  ><h4 className='text-center'>Wat</h4></Row>
           {/* In the desktop, MSComponent will render a row with px-1 */}
+          {/* Here we render either an arbitrary screen: {tag: "FreeFormScreen", elements: MainScreenElements}, or all TableFormDef elements in the {tag: "TableForms", elements: TableFormDef[]} variant of What. */}
           <MSComponent isMobile={this.state.isSmallScreen || this.state.doubleSection !== "what"} className='bg-light-subtle'>
             <MainContentStub/>
             <SlidingPanelContentStub/>
@@ -192,7 +197,9 @@ class WWWComponent extends Component<{}, WWWComponentState> {
           style={{'--bs-bg-opacity': '.6'} as React.CSSProperties}>
           <Row onClick={() => component.setState( {'doubleSection': "where"} )}  ><h4 className='text-center'>Waar</h4></Row>  
           <Row className='px-1'>
-            <p className='bg-light-subtle'>Weergave van de perspectieven op waar.</p>
+            <p className='bg-light-subtle'>Here we render all TableFormDef elements that make up the Whereto part of the screen (representing the context roles), as Master-Slave components. </p>
+            <p className='bg-light-subtle'>Rendering of the recent contexts.</p>
+            <p className='bg-light-subtle'>Rendering of the pinned contexts.</p>
           </Row>
         </Col>
       </Row>
@@ -205,11 +212,11 @@ class WWWComponent extends Component<{}, WWWComponentState> {
   }
   render() {
     
-    return (<> 
+    return (<MySystem>
       {this.state.isSmallScreen ? this.renderMobile() : this.renderDesktop()}
       {this.notificationsAndClipboard()}
       {this.leftPanel()}
-    </>);
+    </MySystem>);
   }
 }
 
