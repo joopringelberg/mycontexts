@@ -4,8 +4,11 @@ import './www.css';
 import MSComponent from './mscomponent';
 import { MainContentStub, SlidingPanelContentStub } from './contentStubs';
 import i18next from 'i18next';
-import { TableFormDef } from 'perspectives-proxy';
-import {MySystem} from 'perspectives-react';
+import { ContextInstanceT, RoleInstanceT, SharedWorkerChannelPromise } from 'perspectives-proxy';
+import {AppContext, deconstructLocalName, EventDispatcher, externalRole, ModelDependencies, MySystem, PSContext} from 'perspectives-react';
+import { constructPouchdbUser, getInstallationData } from './installationData';
+import { Me } from './me';
+import { Apps } from './apps';
 
 type Section = 'who' | 'what' | 'where';
 
@@ -16,20 +19,54 @@ interface WWWComponentState {
   showNotifications: boolean;
   leftPanelContent: 'about' | 'me' | 'settings' | 'apps' | false;
   activeSection: Section;
+  systemIdentifier: ContextInstanceT;
+  systemUser: RoleInstanceT
+  openContext?: ContextInstanceT
   // apps: TableFormDef
 }
 
 class WWWComponent extends Component<{}, WWWComponentState> {
+  eventDispatcherLocation: {eventDispatcher: (event: any) => void};
+
   constructor(props: {}) {
     super(props);
-    // startPDR();
-    this.state = { isSmallScreen: false, title: 'MyContexts', doubleSection: 'what', showNotifications: false, leftPanelContent: false, activeSection: 'what' };
+    this.state = 
+      { isSmallScreen: false
+      , title: 'MyContexts'
+      , doubleSection: 'what'
+      , showNotifications: false
+      , leftPanelContent: false
+      , activeSection: 'what' 
+      , systemIdentifier: '' as ContextInstanceT
+      , systemUser: '' as RoleInstanceT
+    };
     this.checkScreenSize = this.checkScreenSize.bind(this);
+    this.eventDispatcherLocation = {eventDispatcher: function(){}};
   }
 
   componentDidMount() {
+    const component = this;
+    SharedWorkerChannelPromise.then( pdrHandler => {
+      getInstallationData().then( installationData => {
+        pdrHandler.runPDR( installationData.perspectivesUserId!, 
+          constructPouchdbUser(installationData), 
+          { isFirstInstallation: true, 
+            useSystemVersion: null,
+            myContextsVersion: __MYCONTEXTS_VERSION__
+          }).then ( succeeded => {
+            const systemIdentifier = "def:#" + installationData.perspectivesUserId! + installationData.deviceName! as ContextInstanceT;
+            this.setState(
+              { systemIdentifier
+              , systemUser: systemIdentifier + "$" + deconstructLocalName( ModelDependencies.sysUser) as RoleInstanceT
+              })
+          }
+          );})});
     window.addEventListener('resize', this.checkScreenSize);
     this.checkScreenSize()
+    function listenToOpenContext(event: CustomEvent) {
+      component.setState({openContext: event.detail});
+    }
+    document.body.addEventListener('OpenContext', listenToOpenContext as EventListener, false);
   }
 
   checkScreenSize(){
@@ -92,10 +129,10 @@ class WWWComponent extends Component<{}, WWWComponentState> {
         content = <p>About</p>;
         break;
       case 'me':
-        content = <p>A form that shows information about me (sys:SocialMe). A perspective with a specific view.</p>;
+        content = <Me systemuser={component.state.systemUser}/>;
         break;
       case 'apps':
-        content = <p>A table that shows all apps (IndexedContexts).</p>;
+        content = <Apps systemuser={component.state.systemUser}/>;
         break;
       case 'settings':
         content = <p>Settings</p>;
@@ -211,13 +248,23 @@ class WWWComponent extends Component<{}, WWWComponentState> {
     </Container>);
   }
   render() {
-    
-    return (<MySystem>
-      {this.state.isSmallScreen ? this.renderMobile() : this.renderDesktop()}
-      {this.notificationsAndClipboard()}
-      {this.leftPanel()}
-    </MySystem>);
-  }
+    const component = this;
+    return ( 
+          <AppContext.Provider value={
+              { systemExternalRole: externalRole(component.state.systemIdentifier)
+              , systemIdentifier: component.state.systemIdentifier
+              , systemUser: component.state.systemUser
+              , setEventDispatcher: function(dispatcher : EventDispatcher)
+                  {
+                    component.eventDispatcherLocation.eventDispatcher = dispatcher;
+                  }
+                }}
+              >
+            {this.state.isSmallScreen ? this.renderMobile() : this.renderDesktop()}
+            {this.notificationsAndClipboard()}
+            {this.leftPanel()}
+          </AppContext.Provider>);
+    }
 }
 
 export default WWWComponent;

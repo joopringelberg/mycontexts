@@ -1,16 +1,16 @@
 import React, { } from "react";
 import { PDRproxy, RoleInstanceT, Perspective, PropertyType } from "perspectives-proxy";
-import { ModelDependencies, PerspectiveBasedForm, PerspectivesComponent } from "perspectives-react";
+import { ModelDependencies, PerspectiveBasedForm, PerspectivesComponent, PerspectiveTable } from "perspectives-react";
 
-interface MeProps {
+interface AppsProps {
   systemuser: RoleInstanceT;
 }
 
-interface MeState {
+interface AppsState {
   perspective: Perspective | undefined;
 }
 
-export class Me extends PerspectivesComponent<MeProps, MeState> {
+export class Apps extends PerspectivesComponent<AppsProps, AppsState> {
   constructor(props: {}) {
     super(props);
     this.state = { perspective: undefined
@@ -20,7 +20,7 @@ export class Me extends PerspectivesComponent<MeProps, MeState> {
   componentDidMount() {
     const component = this;
     PDRproxy.then((PDRproxy) => {
-      PDRproxy.getPerspective( this.props.systemuser, ModelDependencies.sysUser, (perspectives: Perspective[]) => {
+      PDRproxy.getPerspective( this.props.systemuser, ModelDependencies.startContexts , (perspectives: Perspective[]) => {
         component.setState({ perspective: perspectives[0] });
       });
     })
@@ -32,7 +32,7 @@ export class Me extends PerspectivesComponent<MeProps, MeState> {
     }
     else {
       // We have a perspective, produce a form.
-      return <PerspectiveBasedForm perspective={this.state.perspective} cardtitle={"" as PropertyType} showControls={false}/>;
+      return <PerspectiveTable perspective={this.state.perspective} showcontrolsandcaption={false}/>;
     }
   }
 }

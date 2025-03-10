@@ -32,7 +32,7 @@ export default class App extends Component<{}, AppState>
   }
 
   componentDidMount(): void {
-    getValue('installationComplete').then((value: boolean) => value)
+    getValue('installationComplete')
     .then((isComplete: boolean) => {
       if (isComplete) {
         this.setState({ phase: 'installationExists' });

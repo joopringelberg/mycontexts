@@ -32,7 +32,7 @@ interface MSComponentProps {
 }
 
 class MSComponent extends Component<MSComponentProps, MSComponentState> {
-  private eventRef: React.RefObject<HTMLDivElement>;
+  private eventRef: React.RefObject<HTMLDivElement | null>;
 
   constructor(props: MSComponentProps) {
     super(props);
