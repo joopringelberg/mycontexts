@@ -65,6 +65,38 @@ class WWWComponent extends Component<{}, WWWComponentState> {
     window.addEventListener('resize', this.checkScreenSize);
     this.checkScreenSize()
     
+    // HISTORY MANAGEMENT
+    window.onpopstate = function(e)
+    {
+      if (e.state.title)
+      {
+        document.title = e.state.title;
+      }
+      if (e.state.selectedContext)
+      {
+        // console.log("Popping previous state, now on " + (e.state.selectedContext ? "context state " + e.state.selectedContext : "roleform state " + e.state.selectedRoleInstance));
+        // Restore the selectedContext or selectedRoleInstance, if any.
+        component.setState(
+          { openContext: e.state.selectedContext } );
+        e.stopPropagation();
+      }
+      else
+      {
+        // In this situation, the next backwards navigation exits MyContexts.
+        // We need a modal dialog that returns a boolean result reflecting the users choice:
+        //  true: yes, I want to leave MyContexts;
+        //  false: no, I don't want to leave MyContexts.
+        // If true, accept navigation.
+        // If false, abort navigation.
+        component.setState(
+          { openContext: undefined }
+        );
+        addEventListener("beforeunload", 
+          (e => e.preventDefault()), 
+          {capture: true});
+      }
+    };
+
     function listenToOpenContext(e: CustomEvent)
     {
       e.stopPropagation();
@@ -84,7 +116,6 @@ class WWWComponent extends Component<{}, WWWComponentState> {
             // console.log("Pushing context state " + e.detail);
             component.setState(
               { openContext: e.detail
-              // , backwardsNavigation: false
             });
           })
         .catch(err => UserMessagingPromise.then( um => 
