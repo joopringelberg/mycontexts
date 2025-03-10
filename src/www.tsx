@@ -4,11 +4,12 @@ import './www.css';
 import MSComponent from './mscomponent';
 import { MainContentStub, SlidingPanelContentStub } from './contentStubs';
 import i18next from 'i18next';
-import { ContextInstanceT, RoleInstanceT, SharedWorkerChannelPromise } from 'perspectives-proxy';
-import {AppContext, deconstructLocalName, EventDispatcher, externalRole, ModelDependencies, MySystem, PSContext} from 'perspectives-react';
+import { ContextInstanceT, FIREANDFORGET, PDRproxy, RoleInstanceT, SharedWorkerChannelPromise } from 'perspectives-proxy';
+import {AppContext, deconstructLocalName, EventDispatcher, externalRole, ModelDependencies, MySystem, PSContext, UserMessagingPromise} from 'perspectives-react';
 import { constructPouchdbUser, getInstallationData } from './installationData';
 import { Me } from './me';
 import { Apps } from './apps';
+import ensureExternalRole from './ensureExternalRole';
 
 type Section = 'who' | 'what' | 'where';
 
@@ -63,8 +64,36 @@ class WWWComponent extends Component<{}, WWWComponentState> {
           );})});
     window.addEventListener('resize', this.checkScreenSize);
     this.checkScreenSize()
-    function listenToOpenContext(event: CustomEvent) {
-      component.setState({openContext: event.detail});
+    
+    function listenToOpenContext(e: CustomEvent)
+    {
+      e.stopPropagation();
+      ensureExternalRole( e.detail )
+        .then(
+          function(erole)
+          {
+            PDRproxy.then( function( pproxy )
+              {
+                pproxy.getRoleName( erole, function (nameArr)
+                  {
+                    document.title = nameArr[0];
+                    history.pushState({ selectedContext: erole, title: nameArr[0] }, "");
+                  },
+                  FIREANDFORGET);
+              });
+            // console.log("Pushing context state " + e.detail);
+            component.setState(
+              { openContext: e.detail
+              // , backwardsNavigation: false
+            });
+          })
+        .catch(err => UserMessagingPromise.then( um => 
+          um.addMessageForEndUser(
+            { title: i18next.t("app_opencontext_title", { ns: 'mycontexts' }) 
+            , message: i18next.t("app_opencontext_message", {context: e.detail, ns: 'mycontexts'})
+            , error: err.toString()
+          })));
+      e.stopPropagation();
     }
     document.body.addEventListener('OpenContext', listenToOpenContext as EventListener, false);
   }
