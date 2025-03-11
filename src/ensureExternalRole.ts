@@ -1,15 +1,23 @@
-// This function returns a promise for the external role of the context of the role s that is passed in, or fails.
-// It expands default namespaces and dereferences IndexedContext names.
-// If the role is a context role, returns the binding of that role.
-//  - pass through an external role
-//  - expand namespace and dereference indexed contexts
-//  - construct an external role for a context identifier
-//  - return the context of the filler for a role identifier.
-//  - throw an error in all other cases.
-
 import { FIREANDFORGET, PDRproxy, RoleInstanceT, ValueT } from "perspectives-proxy";
 import { externalRole, isExternalRole, RoleInstance } from "perspectives-react";
 
+/**
+ * Ensures that the provided role identifier is an external role.
+ * 
+ * This function performs the following steps:
+ * - If the role identifier is already an external role, it resolves immediately.
+ * - If the role identifier is not an external role, it attempts to match the context name.
+ * - If a match is found, it resolves with the external role.
+ * - If no match is found, it attempts to get the binding of the role identifier.
+ * - If a binding is found and it is an external role, it resolves with the binding.
+ * - If the binding is not an external role, it attempts to get the context of the binding.
+ * - If the context is found, it resolves with the external role of the context.
+ * - If no binding or context is found, it rejects with an error.
+ * 
+ * @param s - The role identifier to ensure as an external role.
+ * @returns A promise that resolves to the external role instance.
+ * @throws An error if the role identifier cannot be resolved to an external role.
+ */
 export default function ensureExternalRole(s : string) : Promise<RoleInstanceT>
 {
   if ( isExternalRole( s ) )

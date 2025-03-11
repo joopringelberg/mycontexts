@@ -23,9 +23,9 @@
     "perspectives-proxy": "file:/Users/joopringelberg/Code/perspectives-proxy",
     "perspectives-react": "file:/Users/joopringelberg/Code/perspectives-react",
     "perspectives-sharedworker": "file:/Users/joopringelberg/Code/perspectives-sharedworker",
-    "react": "^19.0.0",
-    "react-bootstrap": "^2.10.9",
-    "react-dom": "^19.0.0",
+    "react": "^18.3.1",
+    "react-bootstrap": "^2.10.5",
+    "react-dom": "^18.3.1",
     "vite-plugin-commonjs": "^0.10.4",
     "vite-tsconfig-paths": "^5.1.4"
   },

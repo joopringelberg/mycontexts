@@ -4,12 +4,13 @@ import './www.css';
 import MSComponent from './mscomponent';
 import { MainContentStub, SlidingPanelContentStub } from './contentStubs';
 import i18next from 'i18next';
-import { ContextInstanceT, FIREANDFORGET, PDRproxy, RoleInstanceT, SharedWorkerChannelPromise } from 'perspectives-proxy';
-import {AppContext, deconstructLocalName, EventDispatcher, externalRole, ModelDependencies, MySystem, PSContext, UserMessagingPromise} from 'perspectives-react';
+import { ContextInstanceT, ContextType, CONTINUOUS, FIREANDFORGET, PDRproxy, RoleInstanceT, RoleType, ScreenDefinition, SharedWorkerChannelPromise, Unsubscriber, What as WhatDef } from 'perspectives-proxy';
+import {AppContext, deconstructContext, deconstructLocalName, EventDispatcher, externalRole, ModelDependencies, PerspectivesComponent, PSContext, UserMessagingPromise} from 'perspectives-react';
 import { constructPouchdbUser, getInstallationData } from './installationData';
 import { Me } from './me';
 import { Apps } from './apps';
 import ensureExternalRole from './ensureExternalRole';
+import { What } from './what';
 
 type Section = 'who' | 'what' | 'where';
 
@@ -22,12 +23,15 @@ interface WWWComponentState {
   activeSection: Section;
   systemIdentifier: ContextInstanceT;
   systemUser: RoleInstanceT
-  openContext?: ContextInstanceT
-  // apps: TableFormDef
+  openContext?: RoleInstanceT
+  openContextType?: ContextType
+  openContextUserType?: RoleType
+  screen?: ScreenDefinition;
 }
 
-class WWWComponent extends Component<{}, WWWComponentState> {
+class WWWComponent extends PerspectivesComponent<{}, WWWComponentState> {
   eventDispatcherLocation: {eventDispatcher: (event: any) => void};
+  screenUnsubscriber: Unsubscriber | undefined;
 
   constructor(props: {}) {
     super(props);
@@ -40,9 +44,11 @@ class WWWComponent extends Component<{}, WWWComponentState> {
       , activeSection: 'what' 
       , systemIdentifier: '' as ContextInstanceT
       , systemUser: '' as RoleInstanceT
+      , screen: undefined
     };
     this.checkScreenSize = this.checkScreenSize.bind(this);
     this.eventDispatcherLocation = {eventDispatcher: function(){}};
+    this.screenUnsubscriber = undefined;
   }
 
   componentDidMount() {
@@ -75,7 +81,6 @@ class WWWComponent extends Component<{}, WWWComponentState> {
       if (e.state.selectedContext)
       {
         // console.log("Popping previous state, now on " + (e.state.selectedContext ? "context state " + e.state.selectedContext : "roleform state " + e.state.selectedRoleInstance));
-        // Restore the selectedContext or selectedRoleInstance, if any.
         component.setState(
           { openContext: e.state.selectedContext } );
         e.stopPropagation();
@@ -115,8 +120,7 @@ class WWWComponent extends Component<{}, WWWComponentState> {
               });
             // console.log("Pushing context state " + e.detail);
             component.setState(
-              { openContext: e.detail
-            });
+              { openContext: erole });
           })
         .catch(err => UserMessagingPromise.then( um => 
           um.addMessageForEndUser(
@@ -127,6 +131,12 @@ class WWWComponent extends Component<{}, WWWComponentState> {
       e.stopPropagation();
     }
     document.body.addEventListener('OpenContext', listenToOpenContext as EventListener, false);
+  }
+
+  componentDidUpdate(prevProps: Readonly<{}>, prevState: Readonly<WWWComponentState>, snapshot?: any): void {
+    if (this.state.openContext !== prevState.openContext) {
+      this.getScreen(this.state.openContext!);
+    }
   }
 
   checkScreenSize(){
@@ -144,6 +154,76 @@ class WWWComponent extends Component<{}, WWWComponentState> {
 
   componentWillUnmount() {
     window.removeEventListener('resize', this.checkScreenSize);
+  }
+
+  getScreen (externalRole : RoleInstanceT)
+  {
+    const component = this;
+    const context = deconstructContext(externalRole) as ContextInstanceT
+    PDRproxy
+      .then( pproxy => pproxy.getContextType( context ) )
+      .then( contextType => 
+        {
+          component.addUnsubscriber(
+            PDRproxy.then( pproxy => pproxy.getMeForContext(
+              externalRole,
+              // userRoles includes roles from aspects.
+              function(userRoles)
+              {
+                // It may happen that there are no user role types.
+                if ( userRoles.length == 0)
+                {
+                  UserMessagingPromise.then( um => 
+                    um.addMessageForEndUser(
+                      { title: i18next.t("screen_no_usertype_for_context_title", { ns: 'preact' }) 
+                      , message: i18next.t("screen_no_usertype_for_context_message", {ns: 'preact'})
+                      , error: "No result from GetMeFromContext"
+                      }));
+                }
+                else
+                {
+                  component.fetchScreen(contextType, userRoles[0], context);
+                  }
+              },
+              CONTINUOUS)))
+          })
+      .catch(e => UserMessagingPromise.then( um => 
+        {
+          um.addMessageForEndUser(
+            { title: i18next.t("screen_computestate_title", { ns: 'preact' }) 
+            , message: i18next.t("screen_computestate_message", {ns: 'preact'})
+            , error: e.toString()
+          });
+          return false;})) as Promise<Boolean>;
+  }
+
+  fetchScreen (contextType : ContextType, userRoleType: RoleType, context: ContextInstanceT )
+  {
+    const component = this;
+    PDRproxy.then(function(pproxy)
+      {
+        if (component.screenUnsubscriber)
+        {
+          pproxy.send(component.screenUnsubscriber, function(){});
+        }
+        pproxy.getScreen(
+          userRoleType
+          , context
+          , contextType
+          , function( screens : ScreenDefinition[] ) 
+            {
+              component.setState({screen: screens[0], openContextType: contextType, openContextUserType: userRoleType});
+            }
+          , CONTINUOUS
+          ,function()
+          {
+            component.setState({screen: undefined});
+          }
+        ).then( function(unsubscriber)
+          {
+            component.screenUnsubscriber = unsubscriber;
+          });
+      });
   }
 
   notificationsAndClipboard() {
@@ -283,10 +363,15 @@ class WWWComponent extends Component<{}, WWWComponentState> {
           <Row onClick={() => component.setState( {'doubleSection': "what"} )}  ><h4 className='text-center'>Wat</h4></Row>
           {/* In the desktop, MSComponent will render a row with px-1 */}
           {/* Here we render either an arbitrary screen: {tag: "FreeFormScreen", elements: MainScreenElements}, or all TableFormDef elements in the {tag: "TableForms", elements: TableFormDef[]} variant of What. */}
-          <MSComponent isMobile={this.state.isSmallScreen || this.state.doubleSection !== "what"} className='bg-light-subtle'>
-            <MainContentStub/>
-            <SlidingPanelContentStub/>
-          </MSComponent>
+          <Row>
+          {this.state.screen?.whoWhatWhereScreen ? 
+              (<PSContext.Provider value={{contextinstance: deconstructContext( this.state.openContext!) as ContextInstanceT, contexttype: this.state.openContextType!, myroletype: this.state.openContextUserType!}}>
+              <What screenelements={  this.state.screen.whoWhatWhereScreen.what }/> 
+              </PSContext.Provider>)
+              : 
+              <div>Select a context.</div>
+              }
+          </Row>
         </Col>
         <Col 
           className='bg-info' 
