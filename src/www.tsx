@@ -5,12 +5,13 @@ import MSComponent from './mscomponent';
 import { MainContentStub, SlidingPanelContentStub } from './contentStubs';
 import i18next from 'i18next';
 import { ContextInstanceT, ContextType, CONTINUOUS, FIREANDFORGET, PDRproxy, RoleInstanceT, RoleType, ScreenDefinition, SharedWorkerChannelPromise, Unsubscriber, What as WhatDef } from 'perspectives-proxy';
-import {AppContext, deconstructContext, deconstructLocalName, EventDispatcher, externalRole, ModelDependencies, PerspectivesComponent, PSContext, UserMessagingPromise} from 'perspectives-react';
+import {AppContext, deconstructContext, deconstructLocalName, externalRole, ModelDependencies, PerspectivesComponent, PSContext, UserMessagingPromise} from 'perspectives-react';
 import { constructPouchdbUser, getInstallationData } from './installationData';
 import { Me } from './me';
 import { Apps } from './apps';
 import ensureExternalRole from './ensureExternalRole';
 import { What } from './what';
+import { Who } from './who';
 
 type Section = 'who' | 'what' | 'where';
 
@@ -30,7 +31,6 @@ interface WWWComponentState {
 }
 
 class WWWComponent extends PerspectivesComponent<{}, WWWComponentState> {
-  eventDispatcherLocation: {eventDispatcher: (event: any) => void};
   screenUnsubscriber: Unsubscriber | undefined;
 
   constructor(props: {}) {
@@ -47,7 +47,6 @@ class WWWComponent extends PerspectivesComponent<{}, WWWComponentState> {
       , screen: undefined
     };
     this.checkScreenSize = this.checkScreenSize.bind(this);
-    this.eventDispatcherLocation = {eventDispatcher: function(){}};
     this.screenUnsubscriber = undefined;
   }
 
@@ -109,18 +108,21 @@ class WWWComponent extends PerspectivesComponent<{}, WWWComponentState> {
         .then(
           function(erole)
           {
-            PDRproxy.then( function( pproxy )
-              {
-                pproxy.getRoleName( erole, function (nameArr)
-                  {
-                    document.title = nameArr[0];
-                    history.pushState({ selectedContext: erole, title: nameArr[0] }, "");
-                  },
-                  FIREANDFORGET);
-              });
-            // console.log("Pushing context state " + e.detail);
-            component.setState(
-              { openContext: erole });
+            if (component.state.openContext !== erole)
+            {
+              PDRproxy.then( function( pproxy )
+                {
+                  pproxy.getRoleName( erole, function (nameArr)
+                    {
+                      document.title = nameArr[0];
+                      history.pushState({ selectedContext: erole, title: nameArr[0] }, "");
+                    },
+                    FIREANDFORGET);
+                });
+              // console.log("Pushing context state " + e.detail);
+              component.setState(
+                { openContext: erole, leftPanelContent: false });
+            }
           })
         .catch(err => UserMessagingPromise.then( um => 
           um.addMessageForEndUser(
@@ -142,12 +144,14 @@ class WWWComponent extends PerspectivesComponent<{}, WWWComponentState> {
   checkScreenSize(){
     const navbar = document.querySelector('#top-navbar');
     const mobileTabs = document.querySelector('#mobile-tabs');
+    const whoHeader = document.querySelector('#whoHeader');
     // Includes the padding of the navbar.
     const navbarHeight = navbar ? (navbar as HTMLElement).offsetHeight : 40;
     const mobileTabsHeight = mobileTabs ? (mobileTabs as HTMLElement).offsetHeight : 48;
     // Set the CSS variable for the navbar height. This is incorporated in the CSS style full-height.
     document.documentElement.style.setProperty('--navbar-height', `${navbarHeight}px`);
     document.documentElement.style.setProperty('--tabs-height', `${mobileTabsHeight}px`); 
+    document.documentElement.style.setProperty('--who-header-height', `${whoHeader ? (whoHeader as HTMLElement).offsetHeight : 0}px`);  
     this.setState(
       { isSmallScreen: window.innerWidth < 768 });
   }
@@ -307,13 +311,20 @@ class WWWComponent extends PerspectivesComponent<{}, WWWComponentState> {
         fill
         >
         <Tab eventKey="who" title="Wie" className='bg-info full-mobile-height px-2' style={{'--bs-bg-opacity': '.2'} as React.CSSProperties}>
-          <p className='bg-light-subtle'>Weergave van de perspectieven op wie.</p>
+          { this.state.screen?.whoWhatWhereScreen ?
+            <Who screenelements={ this.state.screen.whoWhatWhereScreen.who } showTablesAndForm={this.state.isSmallScreen || this.state.doubleSection == "who"}/>
+            :
+            <p className='bg-light-subtle'>Ga ergens heen</p>
+          }
         </Tab>
         <Tab eventKey="what" title="Wat" className='bg-info full-mobile-height px-2' style={{'--bs-bg-opacity': '.4'} as React.CSSProperties}>
-          <MSComponent isMobile={this.state.isSmallScreen}  className='bg-light-subtle'>
-            <MainContentStub/>
-            <SlidingPanelContentStub/>
-          </MSComponent>
+          { this.state.screen?.whoWhatWhereScreen ? 
+            (<PSContext.Provider value={{contextinstance: deconstructContext( this.state.openContext!) as ContextInstanceT, contexttype: this.state.openContextType!, myroletype: this.state.openContextUserType!}}>
+              <What screenelements={  this.state.screen.whoWhatWhereScreen.what }/> 
+            </PSContext.Provider>)
+            : 
+            <div>Ga ergens heen.</div>
+          }
         </Tab>
         <Tab eventKey="where" title="Waar" className='bg-info full-mobile-height px-2' style={{'--bs-bg-opacity': '.6'} as React.CSSProperties}>
           <p className='bg-light-subtle'>Weergave van de perspectieven op waar.</p>
@@ -350,10 +361,13 @@ class WWWComponent extends PerspectivesComponent<{}, WWWComponentState> {
           className='bg-info full-height' 
           xs={ this.state.doubleSection === "who" ? 6 : 3} 
           style={{'--bs-bg-opacity': '.2'} as React.CSSProperties}>
-            <Row onClick={() => component.setState( {'doubleSection': "who"} )}><h4 className='text-center'>Wie</h4></Row>
-            <Row className='px-1'>
-                <p className='bg-light-subtle'>Here we render all TableFormDef elements that make up the Who part of the screen (the user roles), as Master-Slave components. </p>
-                <p className='bg-light-subtle'>Rendering of the chats in this context</p>
+            <Row id="whoHeader" onClick={() => component.setState( {'doubleSection': "who"} )}><h4 className='text-center'>Wie</h4></Row>
+            <Row className='px-1 full-www-content-height'>
+              { this.state.screen?.whoWhatWhereScreen ?
+                <Who screenelements={ this.state.screen.whoWhatWhereScreen.who } showTablesAndForm={this.state.isSmallScreen || this.state.doubleSection == "who"}/>
+                :
+                <p className='bg-light-subtle'>Ga ergens heen</p>
+              }
             </Row>
         </Col>
         <Col 
@@ -363,13 +377,13 @@ class WWWComponent extends PerspectivesComponent<{}, WWWComponentState> {
           <Row onClick={() => component.setState( {'doubleSection': "what"} )}  ><h4 className='text-center'>Wat</h4></Row>
           {/* In the desktop, MSComponent will render a row with px-1 */}
           {/* Here we render either an arbitrary screen: {tag: "FreeFormScreen", elements: MainScreenElements}, or all TableFormDef elements in the {tag: "TableForms", elements: TableFormDef[]} variant of What. */}
-          <Row>
+          <Row className="full-www-content-height">
           {this.state.screen?.whoWhatWhereScreen ? 
               (<PSContext.Provider value={{contextinstance: deconstructContext( this.state.openContext!) as ContextInstanceT, contexttype: this.state.openContextType!, myroletype: this.state.openContextUserType!}}>
-              <What screenelements={  this.state.screen.whoWhatWhereScreen.what }/> 
+                <What screenelements={  this.state.screen.whoWhatWhereScreen.what }/> 
               </PSContext.Provider>)
               : 
-              <div>Select a context.</div>
+              <div>Ga ergens heen.</div>
               }
           </Row>
         </Col>
@@ -378,7 +392,7 @@ class WWWComponent extends PerspectivesComponent<{}, WWWComponentState> {
           xs={ this.state.doubleSection === "where" ? 6 : 3} 
           style={{'--bs-bg-opacity': '.6'} as React.CSSProperties}>
           <Row onClick={() => component.setState( {'doubleSection': "where"} )}  ><h4 className='text-center'>Waar</h4></Row>  
-          <Row className='px-1'>
+          <Row className='px-1 className="full-www-content-height"'>
             <p className='bg-light-subtle'>Here we render all TableFormDef elements that make up the Whereto part of the screen (representing the context roles), as Master-Slave components. </p>
             <p className='bg-light-subtle'>Rendering of the recent contexts.</p>
             <p className='bg-light-subtle'>Rendering of the pinned contexts.</p>
@@ -392,6 +406,7 @@ class WWWComponent extends PerspectivesComponent<{}, WWWComponentState> {
       </Navbar>
     </Container>);
   }
+
   render() {
     const component = this;
     return ( 
@@ -399,11 +414,7 @@ class WWWComponent extends PerspectivesComponent<{}, WWWComponentState> {
               { systemExternalRole: externalRole(component.state.systemIdentifier)
               , systemIdentifier: component.state.systemIdentifier
               , systemUser: component.state.systemUser
-              , setEventDispatcher: function(dispatcher : EventDispatcher)
-                  {
-                    component.eventDispatcherLocation.eventDispatcher = dispatcher;
-                  }
-                }}
+              }}
               >
             {this.state.isSmallScreen ? this.renderMobile() : this.renderDesktop()}
             {this.notificationsAndClipboard()}

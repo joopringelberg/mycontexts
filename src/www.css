@@ -7,6 +7,10 @@
   height: calc(100vh - 2 * var(--navbar-height) - var(--tabs-height));
 }
 
+.full-www-content-height {
+  height: calc(100vh - 2 * var(--navbar-height) - var(--who-header-height));
+}
+
 /* Define the slide-in-from-right animation */
 @keyframes slide-in-from-right {
   from {

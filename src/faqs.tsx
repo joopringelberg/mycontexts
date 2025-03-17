@@ -1,4 +1,4 @@
-import { FC } from 'react';
+import React, { FC } from 'react';
 import { Modal } from 'react-bootstrap';
 import i18next from 'i18next';
 
