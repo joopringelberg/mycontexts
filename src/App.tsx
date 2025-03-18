@@ -6,11 +6,12 @@ import ConfigureInstallation, { InstallationData, InstallationResult } from './c
 import {initI18next} from "./i18next.js";
 import { SaveKeyPair } from './saveKeypair.js';
 import i18next from 'i18next';
-import { SharedWorkerChannelPromise as PDRHandler, configurePDRproxy, PDRproxy, FIREANDFORGET, CONTINUOUS, PouchdbUser, RuntimeOptions } from 'perspectives-proxy';
+import { SharedWorkerChannelPromise as PDRHandler, PouchdbUser, RuntimeOptions } from 'perspectives-proxy';
 import { constructPouchdbUser, getInstallationData } from './installationData.js';
 import { startPDR } from './startPDR.js';
 import { Button, Container, Row } from 'react-bootstrap';
 import WWWComponent from './www.js';
+import { getInstalledVersion, runUpgrade, setMyContextsVersion, toWWW } from './dataUpgrade.js';
 
 await initI18next();
 
@@ -28,7 +29,7 @@ export default class App extends Component<{}, AppState>
       { phase: undefined
       , installationResult: { type: 'NoKeyPairData', perspectivesUserId: 'newuser' }
       };
-    startPDR();
+    this.runDataUpgrades().then( () => startPDR());
   }
 
   componentDidMount(): void {
@@ -102,6 +103,18 @@ export default class App extends Component<{}, AppState>
       }
       </Container>;
     }
+  
+  runDataUpgrades( )
+    {
+      // Make sure we have a version number. Initializes to the current version.
+      return getInstalledVersion()
+        .then( installedVersion => 
+          {
+            runUpgrade( installedVersion, "1.0.0", () => toWWW());
+          })
+        .then( () => setMyContextsVersion())
+    }
+  
 
   render()
   {

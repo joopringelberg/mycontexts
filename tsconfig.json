@@ -17,6 +17,7 @@
     "noEmit": true,
     "noUnusedLocals": false, // Disable errors for unused local variables
     "noUnusedParameters": false, // Disable errors for unused parameters
+    "preserveSymlinks": true,
     "paths": {
       "perspectives-core": ["/Users/joopringelberg/Code/perspectives-core/dist/perspectives-core.js"],
       "/perspectives-core.js": ["/Users/joopringelberg/Code/perspectives-core/dist/perspectives-core.js"],

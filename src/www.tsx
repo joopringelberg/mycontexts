@@ -1,8 +1,6 @@
 import React, { Component } from 'react';
 import { Accordion, Col, Container, Nav, Navbar, NavDropdown, Offcanvas, Row, Tab, Tabs } from 'react-bootstrap';
 import './www.css';
-import MSComponent from './mscomponent';
-import { MainContentStub, SlidingPanelContentStub } from './contentStubs';
 import i18next from 'i18next';
 import { ContextInstanceT, ContextType, CONTINUOUS, FIREANDFORGET, PDRproxy, RoleInstanceT, RoleType, ScreenDefinition, SharedWorkerChannelPromise, Unsubscriber, What as WhatDef } from 'perspectives-proxy';
 import {AppContext, deconstructContext, deconstructLocalName, externalRole, ModelDependencies, PerspectivesComponent, PSContext, UserMessagingPromise} from 'perspectives-react';

@@ -289,6 +289,8 @@ function handleInstall ( { deviceName, keyPair, identityFile, couchdbUrl, couchd
       callback({ type: 'KeyPairData', perspectivesUserId, keyPair});
     })
   }
+  // Save the version of mycontexts.
+  setValue('currentMyContextsVersion', __MYCONTEXTS_VERSION__);
 };
 
 // Given a CryptoKey, save the private key part in a way that it cannot be exported.

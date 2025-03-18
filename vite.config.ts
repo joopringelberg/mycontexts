@@ -2,7 +2,9 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react-swc'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import commonjs from 'vite-plugin-commonjs'
-import { default as thepackage } from './package.json'
+import { visualizer } from 'rollup-plugin-visualizer'
+import postcss from 'rollup-plugin-postcss';
+import json from '@rollup/plugin-json';import { default as thepackage } from './package.json'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -49,10 +51,25 @@ export default defineConfig({
         '/Users/joopringelberg/Code/perspectives-core/dist/perspectives-core.js',
         '/Users/joopringelberg/Code/perspectives-pageworker/dist/perspectives-pageworker.js',
         '/Users/joopringelberg/Code/perspectives-sharedworker/dist/perspectives-sharedworker.js'
+      ],
+      plugins: [
+        // postcss({
+        //   extract: true, // Extract CSS to a separate file
+        //   minimize: true, // Minimize the CSS
+        //   sourceMap: true // Generate source maps for the CSS
+        //   }),
+        // json(),
+        visualizer({
+          filename: './dist/stats.html',
+          open: true
+        })
       ]
     }
   },
   define: {
-    __MYCONTEXTS_VERSION__: JSON.stringify(thepackage.version)
+    __MYCONTEXTS_VERSION__: JSON.stringify(thepackage.version),
+    __PPSTORAGELIMIT__: JSON.stringify(10),
+    __PPWARNINGLEVEL__: JSON.stringify(5),
+    __PPSTORAGEURL__: JSON.stringify("https://mycontexts.com/ppsfs/uploadfile")
   }
 })
