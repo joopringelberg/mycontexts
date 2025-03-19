@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react-swc'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import commonjs from 'vite-plugin-commonjs'
 import { visualizer } from 'rollup-plugin-visualizer'
+import del from 'rollup-plugin-delete'
 import postcss from 'rollup-plugin-postcss';
 import json from '@rollup/plugin-json';import { default as thepackage } from './package.json'
 
@@ -28,14 +29,14 @@ export default defineConfig({
     commonjs(),
     tsconfigPaths()
   ],
-  resolve: {
-    alias: {
-      'perspectives-core': '/Users/joopringelberg/Code/perspectives-core/dist/perspectives-core.js',
-      '/perspectives-core.js': '/Users/joopringelberg/Code/perspectives-core/dist/perspectives-core.js',
-      'perspectives-pageworker': '/Users/joopringelberg/Code/perspectives-pageworker/dist/perspectives-pageworker.js',
-      'perspectives-sharedworker': '/Users/joopringelberg/Code/perspectives-sharedworker/dist/perspectives-sharedworker.js'
-    }
-  },
+  // resolve: {
+  //   alias: {
+  //     'perspectives-core': '../perspectives-core/dist/perspectives-core.js',
+  //     '/perspectives-core.js': '../perspectives-core/dist/perspectives-core.js',
+  //     'perspectives-pageworker': '../perspectives-pageworker/dist/perspectives-pageworker.js',
+  //     'perspectives-sharedworker': '../perspectives-sharedworker/dist/perspectives-sharedworker.js'
+  //   }
+  // },
   optimizeDeps: {
     include: ['react', 'react-dom']
   },
@@ -47,12 +48,13 @@ export default defineConfig({
         main: './index.html',
         manage: './manage.html'
       },
-      external: [
-        '/Users/joopringelberg/Code/perspectives-core/dist/perspectives-core.js',
-        '/Users/joopringelberg/Code/perspectives-pageworker/dist/perspectives-pageworker.js',
-        '/Users/joopringelberg/Code/perspectives-sharedworker/dist/perspectives-sharedworker.js'
-      ],
+      // external: [
+      //   '/Users/joopringelberg/Code/perspectives-core/dist/perspectives-core.js',
+      //   '/Users/joopringelberg/Code/perspectives-pageworker/dist/perspectives-pageworker.js',
+      //   '/Users/joopringelberg/Code/perspectives-sharedworker/dist/perspectives-sharedworker.js'
+      // ],
       plugins: [
+        del({ targets: 'dist/*' }), // Add this line to clear the dist directory
         // postcss({
         //   extract: true, // Extract CSS to a separate file
         //   minimize: true, // Minimize the CSS

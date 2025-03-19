@@ -152,5 +152,6 @@ const localUsers = new Pouchdb("localUsers");
 // Returns a promise for an array of PerspectivesUsers identifiers (Couchdb user names).
 export function allUsers() : Promise<string[]>
 {
-  return localUsers.allDocs().then(result => result.rows.map( row => row.id));
+  return localUsers.allDocs().then((result : QueryResult) => result.rows.map( row => row.id));
 }
+type QueryResult = { rows : { id : string }[] };
